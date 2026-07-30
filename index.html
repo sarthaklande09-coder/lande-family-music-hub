@@ -1,0 +1,1982 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lande Family Portal & VIKSIT Vault</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        viksitDark: '#0b071e',
+                        viksitPurple: '#3b146b',
+                        viksitNeon: '#a855f7',
+                        viksitGold: '#fbbf24'
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; width: 100vw; max-width: 100%; }
+        .glass-panel { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 8px 32px 0 rgba(6, 182, 212, 0.1); }
+        .dark .glass-panel { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4); }
+        .glass-modal { background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(20px); }
+        .dark .glass-modal { background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(20px); }
+        .glow-btn { background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4); }
+        .viksit-card { background: linear-gradient(135deg, #110c2e 0%, #221252 50%, #110c2e 100%); border: 1px solid rgba(168, 85, 247, 0.3); }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 min-h-screen pb-20 relative w-full">
+
+    <!-- Header / Navbar with Foldable Menu & Cloud Status Check Section -->
+    <header class="sticky top-0 z-40 w-full backdrop-blur-xl bg-white/80 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between w-full">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="triggerLogoUpload()" title="App Logo Badlein">
+                <div class="w-10 h-10 rounded-2xl bg-purple-600 flex items-center justify-center text-white font-black text-sm shadow overflow-hidden relative group">
+                    <img id="appHeaderLogo" src="" alt="Logo" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center text-[10px] text-white">Edit</div>
+                </div>
+                <div>
+                    <h1 class="font-black text-base sm:text-lg text-slate-900 dark:text-white flex items-center gap-1.5">
+                        Lande Family Portal
+                    </h1>
+                    <p class="text-[10px] text-purple-600 dark:text-purple-400 font-bold">Sabka Apna Sangeet</p>
+                </div>
+            </div>
+
+            <!-- Desktop & Mobile Controls -->
+            <div class="flex items-center space-x-2">
+                <!-- Cloud Status Check Button -->
+                <button onclick="openCloudStatusModal()" class="px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer hover:bg-emerald-500/20 transition" title="Check Cloud Sync Status">
+                    <span id="syncIndicator" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="hidden sm:inline">Check Cloud</span>
+                </button>
+
+                <!-- Notification Bell -->
+                <button onclick="openNotificationsModal()" class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 flex items-center justify-center cursor-pointer relative z-20 text-sm shadow-sm hover:scale-105 transition-transform" title="Notifications">
+                    🔔 <span id="notifBadge" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full"></span>
+                </button>
+
+                <!-- Theme Toggle -->
+                <button onclick="toggleTheme()" id="squareThemeBtn" class="w-9 h-9 rounded-lg border-2 border-slate-300 dark:border-slate-700 bg-blue-600 dark:bg-white cursor-pointer relative z-20 shadow-sm transition-transform hover:scale-105" title="Theme Badlein"></button>
+
+                <!-- Foldable / Mobile Menu Toggle Button -->
+                <button onclick="toggleMobileMenu()" class="md:hidden w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 flex items-center justify-center text-lg font-black cursor-pointer">
+                    ☰
+                </button>
+            </div>
+        </div>
+
+        <!-- Foldable Mobile & Desktop Nav Menu (Home, Family Groups, About, ADMIN) -->
+        <div id="foldableNavMenu" class="hidden md:flex flex-col md:flex-row items-center justify-center gap-2 md:gap-6 py-3 bg-white/95 dark:bg-slate-900/95 border-t border-slate-200 dark:border-slate-800 text-xs font-extrabold">
+            <button onclick="switchNavTab('home')" class="nav-tab-btn px-4 py-2 rounded-xl hover:bg-purple-600 hover:text-white transition cursor-pointer text-purple-600 dark:text-purple-400">Home</button>
+            <button onclick="switchNavTab('groups')" class="nav-tab-btn px-4 py-2 rounded-xl hover:bg-purple-600 hover:text-white transition cursor-pointer">Family Groups</button>
+            <button onclick="switchNavTab('about')" class="nav-tab-btn px-4 py-2 rounded-xl hover:bg-purple-600 hover:text-white transition cursor-pointer">About</button>
+            <button onclick="toggleAdminLoginModal()" id="adminNavBtnLabel" class="px-4 py-2 rounded-xl bg-purple-600 text-white hover:bg-purple-700 transition cursor-pointer shadow">ADMIN</button>
+        </div>
+    </header>
+
+    <!-- Main Dashboard View -->
+    <main id="mainDashboardView" class="max-w-4xl mx-auto px-4 pt-6 space-y-6 w-full">
+
+        <!-- Admin Notice Bar -->
+        <div id="adminNoticeBar" class="hidden p-3 bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-purple-500/20 border border-purple-500/50 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-purple-900 dark:text-purple-200 shadow-lg relative z-30">
+            <div>
+                <span class="font-extrabold text-purple-600 dark:text-purple-400 text-sm">ADMIN MODE ACTIVE</span>
+                <p class="text-[10px] font-bold mt-0.5">Control Panel Ready</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="openAdminNotificationModal()" class="p-2.5 bg-amber-600 hover:bg-amber-700 text-white font-extrabold rounded-xl text-xs cursor-pointer shadow flex items-center justify-center" title="Notification Bhejein">🔔</button>
+                <button onclick="triggerLogoUpload()" class="p-2.5 bg-purple-600 hover:bg-purple-700 text-white font-extrabold rounded-xl text-xs cursor-pointer shadow flex items-center justify-center" title="Logo Badlein">📷</button>
+                <button onclick="exportPortalData()" class="p-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl text-xs cursor-pointer shadow flex items-center justify-center" title="Backup Export Karein">📥</button>
+                <button onclick="triggerImportPortalData()" class="p-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs cursor-pointer shadow flex items-center justify-center" title="Backup Import Karein">📤</button>
+                <button onclick="window.saveDataToFirestore()" class="p-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs flex items-center justify-center shadow-lg cursor-pointer" title="Cloud Par Publish Karein">☁️</button>
+                <button onclick="logoutAdmin()" class="p-2.5 bg-red-600 hover:bg-red-700 text-white font-extrabold rounded-xl text-xs cursor-pointer flex items-center justify-center" title="Logout Karein">🚪</button>
+            </div>
+        </div>
+
+        <!-- Starting Clean Banner -->
+        <section class="relative rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 glass-panel p-6 text-white bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                    <span class="px-3 py-1 rounded-full bg-purple-500/20 border border-purple-400/40 text-purple-300 text-xs font-bold">Secure Cloud Vault & VIKSIT</span>
+                    <h2 class="text-2xl font-black mt-2">Lande Family Hub & VIKSIT</h2>
+                    <p class="text-xs text-slate-300 mt-1">Manage profiles, custom folders, statements, maps and secure app viewer.</p>
+                </div>
+                <button onclick="handleProfileClick(event, 0)" class="px-5 py-2.5 glow-btn text-white font-extrabold rounded-2xl text-xs shadow-lg cursor-pointer hover:scale-105 transition-transform">
+                    Explore Hub
+                </button>
+            </div>
+        </section>
+
+        <!-- Profiles Section -->
+        <section class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-black">Family Profiles</h2>
+                <button class="admin-only hidden px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs cursor-pointer shadow relative z-20" onclick="openAddMemberModal()">
+                    + Add Profile
+                </button>
+            </div>
+            <div id="membersGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        </section>
+
+    </main>
+
+    <!-- Full Page Profile Hub View -->
+    <main id="profileHubPageView" class="hidden max-w-4xl mx-auto px-4 pt-6 space-y-6 w-full">
+        <div class="glass-panel rounded-3xl p-6 shadow-2xl relative space-y-6">
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-4">
+                <button onclick="backToDashboard()" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 font-extrabold rounded-xl text-xs flex items-center gap-2 cursor-pointer shadow-sm">
+                    <span>← Back to Dashboard</span>
+                </button>
+                <div class="flex items-center gap-2">
+                    <button class="admin-only hidden px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs cursor-pointer" onclick="openEditProfileModal()">Edit Details</button>
+                    <button class="admin-only hidden px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs cursor-pointer" onclick="deleteCurrentMember()">Delete Profile</button>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <img id="hubPhoto" src="" class="w-20 h-20 rounded-2xl object-cover ring-2 ring-purple-500">
+                    <button class="admin-only hidden absolute bottom-0 right-0 bg-purple-600 text-white p-1 rounded-full text-[10px] cursor-pointer" onclick="triggerPhotoCropper(unlockedMemberIndex)">📷</button>
+                </div>
+                <div>
+                    <h3 id="hubName" class="font-black text-xl">Name</h3>
+                    <p id="hubPhone" class="text-xs text-slate-500 mt-0.5">Phone</p>
+                </div>
+            </div>
+            
+            <div class="p-4 bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-100 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800 rounded-2xl border border-purple-500/30 space-y-2 shadow-inner">
+                <h4 class="text-xs font-black uppercase tracking-wider text-purple-600 dark:text-purple-400 flex items-center justify-between">
+                    <span>Expanded Profile Summary</span>
+                    <span class="text-[10px] font-mono bg-purple-500/20 px-2 py-0.5 rounded text-purple-700 dark:text-purple-300">Verified ID</span>
+                </h4>
+                <div class="grid grid-cols-2 gap-2 text-xs pt-1">
+                    <p><strong>DOB:</strong> <span id="hubDob">-</span></p>
+                    <p><strong>Gender:</strong> <span id="hubGender">-</span></p>
+                    <p class="col-span-2"><strong>Aadhaar No:</strong> <span id="hubAadhaar" class="font-mono text-purple-600">-</span></p>
+                    <p class="col-span-2"><strong>Address:</strong> <span id="hubAddress">-</span></p>
+                    <p class="col-span-2"><strong>Vault PassKey:</strong> <span id="hubPassKey" class="font-mono font-bold text-amber-500">-</span></p>
+                </div>
+            </div>
+
+            <!-- VIKSIT Section -->
+            <div class="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-700">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-xs font-extrabold uppercase tracking-wider text-purple-400">VIKSIT Section & Notes</h4>
+                    <button class="admin-only hidden px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10px] font-bold cursor-pointer glow-btn" onclick="openAddViksitModal()">+ Add VIKSIT Note/File</button>
+                </div>
+                <div id="viksitLinksContainer" class="space-y-2"></div>
+            </div>
+
+            <!-- Slabs & Statements Section -->
+            <div class="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-700">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-500">Slabs (Folders) & Statements</h4>
+                    <div class="flex gap-2">
+                        <button class="admin-only hidden px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10px] font-bold cursor-pointer" onclick="openAddSlabModal()">+ Add Slab</button>
+                        <button class="admin-only hidden px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-[10px] font-bold cursor-pointer" onclick="openAddStatementModal()">+ Add Statement</button>
+                    </div>
+                </div>
+                <div id="slabsAndStatementsContainer" class="space-y-2.5"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Cloud Status Check Modal -->
+    <div id="cloudStatusModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-sm w-full shadow-2xl relative z-50 text-center space-y-4">
+            <button onclick="closeModal('cloudStatusModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 cursor-pointer">✕</button>
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center mx-auto text-xl font-black">☁️</div>
+            <h3 class="font-extrabold text-base text-purple-600">Cloud Vault Connection Status</h3>
+            <p id="cloudStatusDetailText" class="text-xs text-slate-600 dark:text-slate-300">Checking Firebase Cloud Vault connection...</p>
+            <button onclick="closeModal('cloudStatusModal')" class="w-full py-2.5 glow-btn text-white font-extrabold rounded-xl text-xs cursor-pointer">Close</button>
+        </div>
+    </div>
+
+    <!-- Hidden Inputs -->
+    <input type="file" id="logoFileInput" accept="image/*" class="hidden" onchange="handleLogoUpload(event)">
+    <input type="file" id="photoFileInput" accept="image/*" class="hidden" onchange="handlePhotoUpload(event)">
+    <input type="file" id="slabFileInput" accept="*/*" class="hidden" onchange="handleSlabFileUpload(event)">
+    <input type="file" id="statementFileInput" accept="*/*" class="hidden" onchange="handleStatementFileInput(event)">
+    <input type="file" id="viksitFileInput" accept="*/*" class="hidden" onchange="handleViksitFileInput(event)">
+    <input type="file" id="slabIconInput" accept="image/*" class="hidden" onchange="handleSlabIconUpload(event)">
+    <input type="file" id="statementLogoInput" accept="image/*" class="hidden" onchange="handleStatementLogoUpload(event)">
+    <input type="file" id="wifiQr1Input" accept="image/*" class="hidden" onchange="handleWifiQr1Upload(event)">
+    <input type="file" id="wifiQr2Input" accept="image/*" class="hidden" onchange="handleWifiQr2Upload(event)">
+    <input type="file" id="importJsonFileInput" accept=".json" class="hidden" onchange="importPortalData(event)">
+
+    <!-- Open With Action Modal -->
+    <div id="openWithModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-sm w-full shadow-2xl relative z-50 space-y-4">
+            <div class="flex items-center justify-between border-b pb-2">
+                <h3 class="font-extrabold text-sm text-purple-600">Open File With...</h3>
+                <button onclick="closeModal('openWithModal')" class="text-slate-400 hover:text-slate-200 cursor-pointer font-bold">✕</button>
+            </div>
+            <p id="openWithFileName" class="text-xs font-mono text-slate-500 truncate">Filename.pdf</p>
+            <div class="space-y-2 text-xs">
+                <button onclick="executeOpenWith('adobe')" class="w-full py-2.5 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-purple-600 hover:text-white rounded-xl font-bold flex items-center gap-2 transition cursor-pointer">
+                    <span>📄 Open in Adobe Acrobat / PDF Viewer</span>
+                </button>
+                <button onclick="executeOpenWith('gallery')" class="w-full py-2.5 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-purple-600 hover:text-white rounded-xl font-bold flex items-center gap-2 transition cursor-pointer">
+                    <span>🖼️ Open in Gallery / Google Photos</span>
+                </button>
+                <button onclick="executeOpenWith('files')" class="w-full py-2.5 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-purple-600 hover:text-white rounded-xl font-bold flex items-center gap-2 transition cursor-pointer">
+                    <span>📂 Open / Extract in Google Files</span>
+                </button>
+                <button onclick="executeOpenWith('inapp')" class="w-full py-2.5 px-3 bg-purple-600 text-white hover:bg-purple-700 rounded-xl font-bold flex items-center gap-2 transition cursor-pointer shadow">
+                    <span>🔍 Instant In-App Viewer</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- In-App Document Viewer Modal -->
+    <div id="documentViewerModal" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex flex-col p-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800 text-white">
+            <h3 id="viewerFileTitle" class="font-extrabold text-sm truncate max-w-[80%]">Document Preview</h3>
+            <button onclick="closeModal('documentViewerModal')" class="px-3 py-1 bg-red-600 text-white rounded-lg text-xs font-bold cursor-pointer">Close X</button>
+        </div>
+        <div class="flex-1 w-full h-full flex items-center justify-center pt-3 overflow-hidden relative">
+            <div id="viewerContentWrapper" class="w-full h-full flex items-center justify-center bg-slate-900 rounded-2xl overflow-auto p-2"></div>
+        </div>
+    </div>
+
+    <!-- Notifications Modal for Members -->
+    <div id="notificationsModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-md w-full shadow-2xl relative z-50 max-h-[80vh] overflow-y-auto space-y-4">
+            <button onclick="closeModal('notificationsModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 cursor-pointer">✕</button>
+            <h3 class="font-extrabold text-base text-purple-600">🔔 Broadcasted Notifications</h3>
+            <div id="notificationsListContainer" class="space-y-3 text-xs">
+                <p class="text-slate-400 italic">No new notifications.</p>
+            </div>
+            <button onclick="clearNotifications()" class="w-full py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs cursor-pointer">Clear All</button>
+        </div>
+    </div>
+
+    <!-- Admin Broadcast Notification Modal -->
+    <div id="adminNotificationModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-md w-full shadow-2xl relative z-50 space-y-4 max-h-[90vh] overflow-y-auto">
+            <button onclick="closeModal('adminNotificationModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 cursor-pointer">✕</button>
+            <h3 id="adminNotifModalTitle" class="font-extrabold text-base text-purple-600">Manage & Send Notifications</h3>
+            <form onsubmit="saveAdminNotification(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="editNotifIndex" value="-1">
+                <div>
+                    <label class="block font-semibold mb-1">Notification Title</label>
+                    <input type="text" id="notifTitle" placeholder="e.g. Important Family Update" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Message</label>
+                    <textarea id="notifMsg" rows="3" placeholder="Type notification message here..." required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border"></textarea>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Attach File (Optional)</label>
+                    <button type="button" onclick="document.getElementById('notifFileInput').click()" class="w-full py-2 bg-slate-100 dark:bg-slate-800 rounded-xl border border-dashed border-purple-400 text-purple-600 font-bold text-center cursor-pointer">Attach Document/Image</button>
+                    <input type="file" id="notifFileInput" accept="*/*" class="hidden" onchange="handleNotifFileUpload(event)">
+                    <p id="notifFileNameDisplay" class="text-[10px] text-slate-400 mt-1 truncate">No file attached</p>
+                </div>
+                <button type="submit" class="w-full py-2.5 glow-btn text-white font-extrabold rounded-xl cursor-pointer">Save / Broadcast Notification</button>
+            </form>
+            <div class="pt-4 border-t border-slate-200 dark:border-slate-700 space-y-2">
+                <h4 class="font-bold text-xs text-slate-500 uppercase">Existing Broadcasts</h4>
+                <div id="adminNotifManageList" class="space-y-2 max-h-40 overflow-y-auto"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Log Modal -->
+    <div id="activityLogModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-md w-full shadow-2xl relative z-50 max-h-[80vh] overflow-y-auto">
+            <button onclick="closeModal('activityLogModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 cursor-pointer">✕</button>
+            <h3 class="text-base font-extrabold mb-3">📄 Activity History</h3>
+            <p class="text-[11px] text-slate-500 mb-3">Track files opened or viewed inside the app.</p>
+            <div id="activityLogListContainer" class="space-y-2 text-xs">
+                <p class="text-slate-400 italic">No activity recorded yet.</p>
+            </div>
+            <button onclick="clearActivityLogs()" class="mt-4 w-full py-2 bg-red-600/20 text-red-500 font-bold rounded-xl text-xs border border-red-500/30 cursor-pointer">Clear History</button>
+        </div>
+    </div>
+
+    <!-- Add VIKSIT Modal -->
+    <div id="addViksitModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-md w-full shadow-2xl relative z-50 viksit-card text-white">
+            <button onclick="closeModal('addViksitModal')" class="absolute top-4 right-4 text-slate-300 hover:text-white cursor-pointer">✕</button>
+            <h3 id="viksitModalTitle" class="text-base font-extrabold mb-3 text-purple-300">Add VIKSIT Note / App</h3>
+            <form onsubmit="saveNewViksitNote(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="editViksitIndex" value="-1">
+                <input type="text" id="viksitTitleInput" placeholder="Note / Project Title" required class="w-full p-2.5 bg-slate-900/80 rounded-xl border border-purple-500/40 text-white placeholder-slate-400">
+                
+                <div class="flex items-center gap-2 bg-slate-900 p-2 rounded-xl border border-purple-500/30 text-white">
+                    <button type="button" onclick="formatViksitText('bold')" class="px-2.5 py-1 bg-purple-700/50 hover:bg-purple-600 rounded font-bold" title="Bold Text">B</button>
+                    <select id="viksitFontSize" onchange="changeViksitFontSize(this.value)" class="bg-slate-800 text-white px-2 py-1 rounded border border-purple-500/30">
+                        <option value="text-xs">Normal</option>
+                        <option value="text-sm">Medium</option>
+                        <option value="text-base">Large</option>
+                        <option value="text-lg">Extra Large</option>
+                    </select>
+                </div>
+
+                <textarea id="viksitDescInput" rows="3" placeholder="Type your notes here..." class="w-full p-2.5 bg-slate-900/80 rounded-xl border border-purple-500/40 text-white placeholder-slate-400 text-xs"></textarea>
+                
+                <div>
+                    <label class="block text-slate-300 font-semibold mb-1">Attach Any File</label>
+                    <button type="button" onclick="document.getElementById('viksitFileInput').click()" class="w-full py-2 bg-slate-900 rounded-xl border border-dashed border-purple-400 text-purple-300 font-bold text-center cursor-pointer">Choose File to Upload</button>
+                    <p id="viksitFileNameDisplay" class="text-[10px] text-slate-400 mt-1 truncate">No file selected</p>
+                </div>
+
+                <button type="submit" class="w-full py-2.5 glow-btn text-white font-extrabold rounded-xl cursor-pointer">Save VIKSIT Item</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Profile Modal -->
+    <div id="addMemberModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-sm w-full shadow-2xl relative z-50 max-h-[90vh] overflow-y-auto">
+            <button onclick="closeModal('addMemberModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 cursor-pointer">✕</button>
+            <h3 class="text-base font-extrabold mb-3">Add New Family Profile</h3>
+            <form onsubmit="saveNewMember(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1">Full Name</label>
+                    <input type="text" id="newMemberName" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border" placeholder="e.g. Rahul Lande">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Occupation / Subtitle</label>
+                    <input type="text" id="newMemberOccupation" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border" placeholder="e.g. Engineer">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Phone Number</label>
+                    <input type="text" id="newMemberPhone" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border" placeholder="+91 ">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Date of Birth (DOB)</label>
+                    <input type="text" id="newMemberDob" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border" placeholder="DD-MM-YYYY">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Aadhaar Number</label>
+                    <input type="text" id="newMemberAadhaar" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border font-mono" placeholder="XXXX XXXX 1234">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Vault PassKey</label>
+                    <input type="text" id="newMemberPassKey" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border font-mono" placeholder="Secret PassKey">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Address</label>
+                    <textarea id="newMemberAddress" rows="2" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border" placeholder="Full Address"></textarea>
+                </div>
+                <button type="submit" class="w-full py-2.5 glow-btn text-white font-extrabold rounded-xl cursor-pointer">Create Profile</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-sm w-full shadow-2xl relative z-50 max-h-[90vh] overflow-y-auto">
+            <button onclick="closeModal('editProfileModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 cursor-pointer">✕</button>
+            <h3 class="text-base font-extrabold mb-3">Edit Profile, DOB & Password</h3>
+            <form onsubmit="saveEditedProfile(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1">Full Name</label>
+                    <input type="text" id="editMemberName" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Phone</label>
+                    <input type="text" id="editMemberPhone" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Date of Birth (DOB)</label>
+                    <input type="text" id="editMemberDob" required placeholder="DD-MM-YYYY" class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Aadhaar Number</label>
+                    <input type="text" id="editMemberAadhaar" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border font-mono">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Vault Login PassKey / Password</label>
+                    <div class="relative">
+                        <input type="password" id="editMemberPassKey" required class="w-full p-2.5 pr-10 bg-white dark:bg-slate-800 rounded-xl border font-mono">
+                        <button type="button" onclick="toggleEditPassVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 cursor-pointer text-xs">👁️</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Address</label>
+                    <textarea id="editMemberAddress" rows="2" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border"></textarea>
+                </div>
+                <button type="submit" class="w-full py-2.5 glow-btn text-white font-extrabold rounded-xl cursor-pointer">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Slab Modal -->
+    <div id="addSlabModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-sm w-full shadow-2xl relative z-50">
+            <button onclick="closeModal('addSlabModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 cursor-pointer">✕</button>
+            <h3 id="slabModalTitle" class="text-base font-extrabold mb-3">Create / Rename Slab Folder</h3>
+            <form onsubmit="saveNewSlab(event)" class="space-y-3 text-xs">
+                <input type="text" id="slabTitleInput" placeholder="e.g. Income Tax Returns" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border">
+                <div>
+                    <label class="block text-slate-400 font-semibold mb-1">Folder Icon / Image (Gallery)</label>
+                    <button type="button" onclick="document.getElementById('slabIconInput').click()" class="w-full py-2 bg-slate-100 dark:bg-slate-800 rounded-xl border border-dashed border-purple-400 text-purple-600 font-bold text-center cursor-pointer">Choose Custom Icon</button>
+                </div>
+                <button type="submit" class="w-full py-2.5 glow-btn text-white font-extrabold rounded-xl cursor-pointer">Save Folder</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Statement Record Modal -->
+    <div id="addStatementModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-sm w-full shadow-2xl relative z-50">
+            <button onclick="closeModal('addStatementModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 cursor-pointer">✕</button>
+            <h3 class="text-base font-extrabold mb-3">Add Financial Statement Record</h3>
+            <form onsubmit="saveNewStatement(event)" class="space-y-3 text-xs">
+                <input type="text" id="statementNameInput" placeholder="e.g. Axis Bank Statement 2026" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border">
+                <input type="text" id="statementDetailsInput" placeholder="e.g. A/C No: XXXX 9012" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border">
+                <div>
+                    <label class="block text-slate-400 font-semibold mb-1">Statement Logo / Icon</label>
+                    <button type="button" onclick="document.getElementById('statementLogoInput').click()" class="w-full py-2 bg-slate-100 dark:bg-slate-800 rounded-xl border border-dashed border-purple-400 text-purple-600 font-bold text-center cursor-pointer">Upload Logo</button>
+                </div>
+                <div>
+                    <label class="block text-slate-400 font-semibold mb-1">Statement Document (PDF / Image)</label>
+                    <button type="button" onclick="document.getElementById('statementFileInput').click()" class="w-full py-2 bg-slate-100 dark:bg-slate-800 rounded-xl border border-dashed border-purple-400 text-purple-600 font-bold text-center cursor-pointer">Select File</button>
+                </div>
+                <button type="submit" class="w-full py-2.5 glow-btn text-white font-extrabold rounded-xl cursor-pointer">Save Statement</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Photo Crop Modal -->
+    <div id="cropperModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-5 max-w-sm w-full text-center shadow-2xl z-50">
+            <h3 class="font-bold text-sm mb-2">Crop & Adjust Photo</h3>
+            <div class="w-40 h-40 mx-auto bg-slate-900 rounded-2xl overflow-hidden border-2 border-purple-400 flex items-center justify-center">
+                <canvas id="cropCanvas" class="max-w-full max-h-full"></canvas>
+            </div>
+            <div class="mt-4 flex gap-2">
+                <button onclick="closeModal('cropperModal')" class="w-1/2 py-2 bg-slate-300 dark:bg-slate-800 rounded-xl text-xs font-bold cursor-pointer">Cancel</button>
+                <button onclick="saveCroppedPhoto()" class="w-1/2 py-2 glow-btn text-white rounded-xl text-xs font-bold cursor-pointer">Save Photo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Telephone Directory Modal -->
+    <div id="contactModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-sm w-full shadow-2xl relative z-50">
+            <button onclick="closeModal('contactModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 cursor-pointer">✕</button>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-extrabold text-base">Telephone Directory</h3>
+                <button class="admin-only hidden px-2.5 py-1 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs cursor-pointer" onclick="openEditDirectoryModal()">Edit</button>
+            </div>
+            <div id="directoryListContainer" class="space-y-2.5 text-xs max-h-72 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <!-- Edit Directory Modal -->
+    <div id="editDirectoryModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-sm w-full shadow-2xl relative z-50">
+            <button onclick="closeModal('editDirectoryModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 cursor-pointer">✕</button>
+            <h3 class="text-base font-extrabold mb-3">Edit Directory</h3>
+            <div id="editDirectoryFormContainer" class="space-y-3 text-xs max-h-72 overflow-y-auto pr-1"></div>
+            <button onclick="addNewDirectoryItem()" class="w-full py-1.5 bg-purple-600/20 text-purple-700 dark:text-purple-300 font-bold rounded-xl text-xs mt-2 cursor-pointer border border-purple-500/30">+ Add Contact</button>
+            <button onclick="saveEditedDirectory()" class="w-full py-2.5 glow-btn text-white font-extrabold rounded-xl mt-3 cursor-pointer">Save Changes</button>
+        </div>
+    </div>
+
+    <!-- Wi-Fi Modal -->
+    <div id="wifiModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-md w-full shadow-2xl relative space-y-4 z-50">
+            <button onclick="closeModal('wifiModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 cursor-pointer">✕</button>
+            <div class="flex items-center justify-between">
+                <h3 class="font-extrabold text-base">Home Wi-Fi Credentials</h3>
+                <button class="admin-only hidden px-3 py-1 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs cursor-pointer" onclick="openEditWifiModal()">Edit Wi-Fi</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="p-3.5 bg-white/80 dark:bg-slate-800 rounded-2xl border text-center space-y-2">
+                    <h4 class="font-black text-xs" id="wifi1Ssid">Airtel_Sarthak</h4>
+                    <p class="text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-900 p-1 rounded-xl text-purple-600 select-all" id="wifi1Pass">Sarthak @9673465849</p>
+                    <div class="w-24 h-24 mx-auto rounded-lg overflow-hidden border bg-white p-1 flex items-center justify-center" id="wifi1QrContainer"><span class="text-[10px] text-slate-400">No QR</span></div>
+                </div>
+                <div class="p-3.5 bg-white/80 dark:bg-slate-800 rounded-2xl border text-center space-y-2">
+                    <h4 class="font-black text-xs" id="wifi2Ssid">Sarthak</h4>
+                    <p class="text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-900 p-1 rounded-xl text-purple-600 select-all" id="wifi2Pass">Sarthak @9673465849</p>
+                    <div class="w-24 h-24 mx-auto rounded-lg overflow-hidden border bg-white p-1 flex items-center justify-center" id="wifi2QrContainer"><span class="text-[10px] text-slate-400">No QR</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Wi-Fi Modal -->
+    <div id="editWifiModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-sm w-full shadow-2xl relative z-50 max-h-[90vh] overflow-y-auto">
+            <button onclick="closeModal('editWifiModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 cursor-pointer">✕</button>
+            <h3 class="text-base font-extrabold mb-3">Edit Wi-Fi Details & QR</h3>
+            <form onsubmit="saveEditedWifi(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1">Wi-Fi 1 SSID Name</label>
+                    <input type="text" id="inputWifi1Ssid" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Wi-Fi 1 Password</label>
+                    <input type="text" id="inputWifi1Pass" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border font-mono">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Wi-Fi 1 QR Image</label>
+                    <button type="button" onclick="document.getElementById('wifiQr1Input').click()" class="w-full py-2 bg-slate-100 dark:bg-slate-800 rounded-xl border border-dashed border-purple-400 text-purple-600 font-bold text-center cursor-pointer">Upload QR 1</button>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Wi-Fi 2 SSID Name</label>
+                    <input type="text" id="inputWifi2Ssid" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Wi-Fi 2 Password</label>
+                    <input type="text" id="inputWifi2Pass" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border font-mono">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Wi-Fi 2 QR Image</label>
+                    <button type="button" onclick="document.getElementById('wifiQr2Input').click()" class="w-full py-2 bg-slate-100 dark:bg-slate-800 rounded-xl border border-dashed border-purple-400 text-purple-600 font-bold text-center cursor-pointer">Upload QR 2</button>
+                </div>
+                <button type="submit" class="w-full py-2.5 glow-btn text-white font-extrabold rounded-xl mt-2 cursor-pointer">Save Wi-Fi</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Address & Map Modal -->
+    <div id="addressModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl max-w-2xl w-full shadow-2xl relative flex flex-col p-5 z-50">
+            <button onclick="closeModal('addressModal')" class="absolute top-4 right-4 z-20 p-2 bg-slate-900 text-white rounded-full cursor-pointer">✕</button>
+            <div class="flex items-center justify-between mb-3 pr-8 flex-wrap gap-2">
+                <h3 class="font-extrabold text-base">Multi-Home Maps & Pinning</h3>
+                <div class="flex items-center gap-2">
+                    <select id="mapLayerSelect" onchange="changeMapLayer(this.value)" class="text-xs p-1.5 rounded-lg border bg-slate-100 dark:bg-slate-800 font-bold">
+                        <option value="streets">Street View</option>
+                        <option value="satellite">Satellite View</option>
+                        <option value="terrain">Terrain View</option>
+                    </select>
+                    <button class="admin-only hidden px-3 py-1 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs cursor-pointer" onclick="openAddLocationModal()">+ Add Location</button>
+                </div>
+            </div>
+            <p class="text-[11px] text-slate-400 mb-2">Tip: Click anywhere on the map to pin a new custom home location!</p>
+            <div id="homeLocationsList" class="flex flex-wrap gap-2 mb-3"></div>
+            <div id="mapContainer" class="w-full h-72 rounded-2xl border-2 border-purple-400 relative z-10"></div>
+        </div>
+    </div>
+
+    <!-- Add Custom Location Modal -->
+    <div id="addLocationModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-sm w-full shadow-2xl relative z-50">
+            <button onclick="closeModal('addLocationModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 cursor-pointer">✕</button>
+            <h3 class="text-base font-extrabold mb-3">Save Pinned Home Location</h3>
+            <form onsubmit="saveNewLocation(event)" class="space-y-3 text-xs">
+                <input type="text" id="inputLocName" placeholder="Home Title (e.g. Vacation Villa)" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border">
+                <textarea id="inputLocDesc" rows="2" placeholder="Full Address Details" required class="w-full p-2.5 bg-white dark:bg-slate-800 rounded-xl border"></textarea>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="inputLocLat" placeholder="Latitude" readonly class="w-full p-2.5 bg-slate-100 dark:bg-slate-900 rounded-xl border font-mono">
+                    <input type="text" id="inputLocLng" placeholder="Longitude" readonly class="w-full p-2.5 bg-slate-100 dark:bg-slate-900 rounded-xl border font-mono">
+                </div>
+                <button type="submit" class="w-full py-2.5 glow-btn text-white font-extrabold rounded-xl cursor-pointer">Save as Home</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="adminModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-sm w-full shadow-2xl relative text-center z-50">
+            <button onclick="closeModal('adminModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 cursor-pointer">✕</button>
+            <h3 class="text-base font-extrabold mb-1">Admin Authentication</h3>
+            <p class="text-xs text-slate-500 mb-4">Enter master security password</p>
+            <form onsubmit="verifyAdminPassword(event)" class="space-y-3 text-left">
+                <div class="relative">
+                    <input type="password" id="adminPassInput" placeholder="Enter Admin Password" required class="w-full p-2.5 pr-10 bg-white dark:bg-slate-800 rounded-xl border text-xs font-mono">
+                    <button type="button" onclick="toggleAdminPasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300 cursor-pointer text-sm p-1 z-20 select-none">👁️</button>
+                </div>
+                <div id="adminPassError" class="hidden p-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-[11px] font-bold text-center">
+                    Incorrect Admin Password!
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-extrabold rounded-xl text-xs cursor-pointer shadow">Login Admin</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Password Modal for Vault Unlock -->
+    <div id="passwordModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-sm w-full shadow-2xl relative text-center z-50">
+            <button onclick="closeModal('passwordModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 cursor-pointer">✕</button>
+            <h3 class="text-base font-extrabold mb-1 text-purple-600">Unlock Vault</h3>
+            <p class="text-[11px] text-slate-500 mb-3">ACCOUNT HOLDER's PASSWORD</p>
+            <form onsubmit="verifyPassword(event)" class="space-y-3 text-left">
+                <div class="relative">
+                    <input type="password" id="passInput" placeholder="Enter Passkey" required class="w-full p-2.5 pr-10 bg-white dark:bg-slate-800 rounded-xl border text-xs font-mono">
+                    <button type="button" onclick="toggleVaultPasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300 cursor-pointer text-sm p-1 z-20 select-none">👁️</button>
+                </div>
+                <button type="submit" class="w-full py-2.5 glow-btn text-white font-extrabold rounded-xl text-xs cursor-pointer">Unlock</button>
+                <div class="text-center pt-2">
+                    <button type="button" onclick="sendWhatsAppForgotRequest()" class="text-[11px] text-purple-600 dark:text-purple-400 font-bold underline cursor-pointer">
+                        💬 Forgot Password? (WhatsApp Support)
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-20 right-1/2 translate-x-1/2 bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-full shadow-2xl opacity-0 transition duration-300 pointer-events-none z-50"></div>
+
+    <!-- Synchronous Data Core & Storage Handler -->
+    <script>
+        const defaultMembers = [
+            { name: "Sarthak Kamlesh Lande", occupation: "Student", phone: "+91 9673465849", email: "sarthak@gmail.com", dob: "15-08-2005", gender: "Male", passKey: "@Sarthak2009", photo: "", address: "Devshree Estate, Nashik", aadhaarMasked: "XXXX XXXX 3489", hidden: false, slabs: [], statements: [], viksitNotes: [] },
+            { name: "Kamlesh Ranu Lande", occupation: "Business", phone: "+91 7588332087", email: "kamlesh@gmail.com", dob: "10-05-1978", gender: "Male", passKey: "KAML1982", photo: "", address: "Devshree Estate, Nashik", aadhaarMasked: "XXXX XXXX 0541", hidden: false, slabs: [], statements: [], viksitNotes: [] },
+            { name: "Sulochana Kamlesh Lande", occupation: "Homemaker", phone: "+91 8422930046", email: "sulochana@gmail.com", dob: "22-11-1982", gender: "Female", passKey: "SULU1985", photo: "", address: "Devshree Estate, Nashik", aadhaarMasked: "XXXX XXXX 5541", hidden: false, slabs: [], statements: [], viksitNotes: [] },
+            { name: "Vimal Ranu Lande", occupation: "Elder", phone: "+91 9850301840", email: "vimal@gmail.com", dob: "04-03-1955", gender: "Female", passKey: "VIMA1111", photo: "", address: "Devshree Estate, Nashik", aadhaarMasked: "XXXX XXXX 8912", hidden: false, slabs: [], statements: [], viksitNotes: [] }
+        ];
+
+        function getInitials(name) {
+            if (!name) return 'FL';
+            const parts = String(name).trim().split(/\s+/).filter(Boolean);
+            if (parts.length === 0) return 'FL';
+            if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+
+        function createAvatarSVG(initials) {
+            const safeInitials = initials || 'FL';
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%"><rect width="100%" height="100%" fill="#7c3aed"/><text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-size="34" font-weight="900">${safeInitials}</text></svg>`;
+            return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+        }
+
+        function createCrestSealSVG() {
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%"><rect width="120" height="120" rx="24" fill="#0f172a"/><circle cx="60" cy="60" r="48" stroke="#a855f7" stroke-width="4" fill="none"/><text x="60" y="65" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="900">LANDE</text></svg>`;
+            return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+        }
+
+        window.familyMembers = JSON.parse(localStorage.getItem('lande_members_data')) || defaultMembers;
+        window.customCrestLogo = localStorage.getItem('lande_crest_logo') || createCrestSealSVG();
+        window.wifiData = JSON.parse(localStorage.getItem('lande_wifi_data')) || { wifi1Ssid: "Airtel_Sarthak", wifi1Pass: "Sarthak @9673465849", wifi1Qr: "", wifi2Ssid: "Sarthak", wifi2Pass: "Sarthak @9673465849", wifi2Qr: "" };
+        window.directoryData = JSON.parse(localStorage.getItem('lande_directory_data')) || [
+            { name: "Sarthak", phone1: "+91 9673465849", phone2: "+91 8530498331" },
+            { name: "Kamlesh", phone1: "+91 7588332087", phone2: "" },
+            { name: "Sulochana", phone1: "+91 8422930046", phone2: "" },
+            { name: "Vimal", phone1: "+91 9850301840", phone2: "" }
+        ];
+        window.locationsData = JSON.parse(localStorage.getItem('lande_locations_data')) || [
+            { id: 1, title: "Primary Home Nashik", desc: "Flat no 29, Devshree Estate, Nashik", lat: 19.9975, lng: 73.7898 },
+            { id: 2, title: "Secondary Home Pune", desc: "Kothrud, Pune", lat: 18.5074, lng: 73.8077 }
+        ];
+        window.activityLogs = JSON.parse(localStorage.getItem('lande_activity_logs')) || [];
+        window.notificationsList = JSON.parse(localStorage.getItem('lande_notifications')) || [];
+
+        function saveToLocalCache() {
+            localStorage.setItem('lande_members_data', JSON.stringify(window.familyMembers));
+            localStorage.setItem('lande_crest_logo', window.customCrestLogo);
+            localStorage.setItem('lande_wifi_data', JSON.stringify(window.wifiData));
+            localStorage.setItem('lande_directory_data', JSON.stringify(window.directoryData));
+            localStorage.setItem('lande_locations_data', JSON.stringify(window.locationsData));
+            localStorage.setItem('lande_activity_logs', JSON.stringify(window.activityLogs));
+            localStorage.setItem('lande_notifications', JSON.stringify(window.notificationsList));
+        }
+        window.saveToLocalCache = saveToLocalCache;
+
+        function logActivity(action, fileName) {
+            const timestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' });
+            window.activityLogs.unshift({ action, fileName, time: timestamp });
+            if (window.activityLogs.length > 50) window.activityLogs.pop();
+            saveToLocalCache();
+        }
+
+        function compressImage(file, maxDimension, quality, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > height) {
+                        if (width > maxDimension) { height = Math.round((height * maxDimension) / width); width = maxDimension; }
+                    } else {
+                        if (height > maxDimension) { width = Math.round((width * maxDimension) / height); height = maxDimension; }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    callback(canvas.toDataURL('image/jpeg', quality));
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        window.compressImage = compressImage;
+
+        function exportPortalData() {
+            const portalData = {
+                members: window.familyMembers, crestLogo: window.customCrestLogo,
+                wifiData: window.wifiData, directoryData: window.directoryData,
+                locationsData: window.locationsData, activityLogs: window.activityLogs,
+                notificationsList: window.notificationsList, exportDate: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(portalData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.href = url;
+            downloadAnchor.download = `lande_family_portal_backup_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            showToast("Backup exported successfully!");
+        }
+        window.exportPortalData = exportPortalData;
+
+        function triggerImportPortalData() { document.getElementById('importJsonFileInput').click(); }
+        window.triggerImportPortalData = triggerImportPortalData;
+
+        function importPortalData(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = JSON.parse(evt.target.result);
+                    if (data.members) window.familyMembers = data.members;
+                    if (data.crestLogo) window.customCrestLogo = data.crestLogo;
+                    if (data.wifiData) window.wifiData = data.wifiData;
+                    if (data.directoryData) window.directoryData = data.directoryData;
+                    if (data.locationsData) window.locationsData = data.locationsData;
+                    if (data.activityLogs) window.activityLogs = data.activityLogs;
+                    if (data.notificationsList) window.notificationsList = data.notificationsList;
+                    saveToLocalCache();
+                    if (typeof window.updateAllUI === 'function') window.updateAllUI();
+                    if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+                    showToast("Portal data imported & applied!");
+                } catch(err) { showToast("Invalid JSON Backup File!"); }
+            };
+            reader.readAsText(file);
+        }
+        window.importPortalData = importPortalData;
+    </script>
+
+    <!-- Firebase Realtime Cloud Sync Script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB-w8KRaZ49T6D5E2beZAZdTLDdWUQjamM",
+            authDomain: "lande-family-music-huub.firebaseapp.com",
+            projectId: "lande-family-music-huub",
+            storageBucket: "lande-family-music-huub.appspot.com",
+            messagingSenderId: "1059614458620",
+            appId: "1:1059614458620:web:289ef04ee9cee25b9e8d79",
+            measurementId: "G-XLEE7F3877"
+        };
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'lande-family-music-huub';
+
+        window.isCloudSynced = false;
+
+        function updateSyncStatusUI(isSynced) {
+            window.isCloudSynced = isSynced;
+            const indicator = document.getElementById('syncIndicator');
+            const statusDetail = document.getElementById('cloudStatusDetailText');
+            if (indicator) {
+                indicator.className = `w-2.5 h-2.5 rounded-full ${isSynced ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`;
+            }
+            if (statusDetail) {
+                statusDetail.innerText = isSynced ? "Connected successfully to Firebase Cloud Vault (lande-family-music-huub)." : "Connecting or offline to Cloud Vault...";
+            }
+        }
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+
+            async function initAuth() {
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (e) { updateSyncStatusUI(false); }
+            }
+            initAuth();
+
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'portal_state', 'state_doc');
+                    onSnapshot(docRef, (docSnap) => {
+                        if (docSnap.exists()) {
+                            const data = docSnap.data();
+                            if (data.members && Array.isArray(data.members)) window.familyMembers = data.members;
+                            if (data.crestLogo) window.customCrestLogo = data.crestLogo;
+                            if (data.wifiData) window.wifiData = data.wifiData;
+                            if (data.directoryData) window.directoryData = data.directoryData;
+                            if (data.locationsData) window.locationsData = data.locationsData;
+                            if (data.activityLogs) window.activityLogs = data.activityLogs;
+                            if (data.notificationsList) window.notificationsList = data.notificationsList;
+                            saveToLocalCache();
+                            updateAllUI();
+                            updateSyncStatusUI(true);
+                        }
+                    }, (err) => { updateSyncStatusUI(false); });
+                }
+            });
+
+            window.saveDataToFirestore = async function() {
+                saveToLocalCache();
+                const payload = { 
+                    members: window.familyMembers, crestLogo: window.customCrestLogo,
+                    wifiData: window.wifiData, directoryData: window.directoryData,
+                    locationsData: window.locationsData, activityLogs: window.activityLogs,
+                    notificationsList: window.notificationsList
+                };
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'portal_state', 'state_doc');
+                    await setDoc(docRef, payload);
+                    updateSyncStatusUI(true);
+                    showToast("Published & synced live across all devices!");
+                } catch(e) {
+                    updateSyncStatusUI(false);
+                    showToast("Saved locally (Cloud Sync Failed)");
+                }
+            };
+        } catch(e) {
+            updateSyncStatusUI(false);
+            window.saveDataToFirestore = async function() { saveToLocalCache(); showToast("Saved locally!"); };
+        }
+
+        function updateAllUI() {
+            updateCrestLogoDisplay();
+            renderMembersGrid();
+            renderDirectoryList();
+            renderWifiDetails();
+            if (window.unlockedMemberIndex !== null && window.familyMembers[window.unlockedMemberIndex]) {
+                openProfileHub(window.unlockedMemberIndex);
+            }
+        }
+
+        function updateCrestLogoDisplay() {
+            const headerLogo = document.getElementById('appHeaderLogo');
+            if (headerLogo) headerLogo.src = window.customCrestLogo;
+            const badge = document.getElementById('notifBadge');
+            const activeNotifs = (window.notificationsList || []).filter(n => !n.hidden);
+            if (badge && activeNotifs.length > 0) {
+                badge.classList.remove('hidden');
+            } else if (badge) {
+                badge.classList.add('hidden');
+            }
+        }
+
+        window.updateAllUI = updateAllUI;
+        window.updateCrestLogoDisplay = updateCrestLogoDisplay;
+    </script>
+
+    <!-- Global Helpers & Core Functions -->
+    <script>
+        window.isAdminLoggedIn = false;
+        window.targetAuthIndex = 0;
+        window.unlockedMemberIndex = null;
+        window.mapInstance = null;
+        let cropTargetDocIndex = 0;
+        let cropImg = new Image();
+        let targetSlabIndex = null;
+        let tempSlabIcon = "";
+        let tempStatementLogo = "";
+        let tempStatementPdf = "";
+        let tempViksitFile = "";
+        let tempViksitFileName = "";
+        let tempNotifFile = "";
+        let tempNotifFileName = "";
+        let clickedLat = 19.9975;
+        let clickedLng = 73.7898;
+        let currentTileLayer = null;
+
+        let activeFileUrl = "";
+        let activeFileName = "";
+
+        // Toggle Foldable Mobile Menu
+        function toggleMobileMenu() {
+            const menu = document.getElementById('foldableNavMenu');
+            if (menu) menu.classList.toggle('hidden');
+        }
+
+        function switchNavTab(tabName) {
+            const menu = document.getElementById('foldableNavMenu');
+            if (window.innerWidth < 768 && menu) menu.classList.add('hidden');
+            
+            if (tabName === 'home') {
+                backToDashboard();
+            } else if (tabName === 'groups') {
+                backToDashboard();
+                showToast("Family Groups View Active");
+            } else if (tabName === 'about') {
+                showToast("Lande Family Portal v2.0 - Secure Vault");
+            }
+        }
+
+        function openCloudStatusModal() {
+            const statusDetail = document.getElementById('cloudStatusDetailText');
+            if (statusDetail) {
+                statusDetail.innerText = window.isCloudSynced ? "Connected successfully to Firebase Cloud Vault (lande-family-music-huub)." : "Connecting or offline to Cloud Vault...";
+            }
+            openModal('cloudStatusModal');
+        }
+
+        function toggleAdminPasswordVisibility() {
+            const passInput = document.getElementById('adminPassInput');
+            if (passInput) passInput.type = passInput.type === "password" ? "text" : "password";
+        }
+        function toggleVaultPasswordVisibility() {
+            const passInput = document.getElementById('passInput');
+            if (passInput) passInput.type = passInput.type === "password" ? "text" : "password";
+        }
+        function toggleEditPassVisibility() {
+            const passInput = document.getElementById('editMemberPassKey');
+            if (passInput) passInput.type = passInput.type === "password" ? "text" : "password";
+        }
+
+        function sendWhatsAppForgotRequest() {
+            const message = encodeURIComponent(`Hello Sarthak, I forgot my PassKey for the Lande Family Portal vault. Please help me reset or recover it. Thank you!`);
+            window.open(`https://wa.me/919673465849?text=${message}`, '_blank');
+        }
+
+        function handleProfileClick(e, index) {
+            if (e) e.stopPropagation();
+            if (index === undefined || index === null || !window.familyMembers || !window.familyMembers[index]) {
+                showToast("Profile not found");
+                return;
+            }
+            if (window.isAdminLoggedIn) openProfileHub(index);
+            else openModal('passwordModal', index);
+        }
+
+        function renderMembersGrid() {
+            const grid = document.getElementById('membersGrid');
+            if (!grid) return;
+            if (!window.familyMembers || window.familyMembers.length === 0) {
+                grid.innerHTML = '<p class="text-xs text-slate-400 col-span-full text-center py-4">No family profiles recorded.</p>';
+                return;
+            }
+
+            let visibleMembers = window.familyMembers.map((m, originalIndex) => ({ ...m, originalIndex }))
+                .filter(m => window.isAdminLoggedIn || !m.hidden);
+
+            if (visibleMembers.length === 0) {
+                grid.innerHTML = '<p class="text-xs text-slate-400 col-span-full text-center py-4">No active profiles available.</p>';
+                return;
+            }
+
+            grid.innerHTML = visibleMembers.map((m) => {
+                const initials = getInitials(m.name);
+                const photoSrc = m.photo || createAvatarSVG(initials);
+                const hiddenBadge = m.hidden ? `<span class="px-2 py-0.5 bg-red-500/20 text-red-500 rounded-full text-[10px] font-bold">Hidden</span>` : '';
+                return `
+                <div onclick="handleProfileClick(event, ${m.originalIndex})" class="glass-panel rounded-3xl p-5 text-center flex flex-col items-center shadow-sm hover:shadow-lg cursor-pointer transition-all transform hover:-translate-y-1 relative z-10 group">
+                    ${m.hidden ? `<div class="absolute top-3 right-3">${hiddenBadge}</div>` : ''}
+                    <img src="${photoSrc}" class="w-16 h-16 rounded-2xl object-cover mb-3 shadow ring-2 ring-purple-400 group-hover:scale-105 transition-transform pointer-events-none" alt="${m.name}">
+                    <h3 class="font-extrabold text-sm text-slate-900 dark:text-white pointer-events-none">${m.name}</h3>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 pointer-events-none">${m.occupation || 'Family Member'}</p>
+                    <div class="mt-4 flex items-center justify-center gap-2">
+                        <button onclick="handleProfileClick(event, ${m.originalIndex})" class="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold cursor-pointer shadow transition-colors">
+                            ${window.isAdminLoggedIn ? 'Open Profile Hub' : 'Open Vault'}
+                        </button>
+                        ${window.isAdminLoggedIn ? `
+                            <button onclick="toggleHideProfile(event, ${m.originalIndex})" class="px-2 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-xs rounded-xl font-bold" title="Hide/Show Profile">
+                                ${m.hidden ? '👁️ Show' : '🙈 Hide'}
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;}).join('');
+        }
+
+        function toggleHideProfile(e, index) {
+            e.stopPropagation();
+            if (!window.familyMembers[index]) return;
+            window.familyMembers[index].hidden = !window.familyMembers[index].hidden;
+            saveToLocalCache();
+            renderMembersGrid();
+            if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+            showToast(window.familyMembers[index].hidden ? "Profile hidden from public view" : "Profile is now visible");
+        }
+
+        function openAdminNotificationModal() {
+            document.getElementById('editNotifIndex').value = "-1";
+            document.getElementById('adminNotifModalTitle').innerText = "Send Admin Notification";
+            document.getElementById('notifTitle').value = "";
+            document.getElementById('notifMsg').value = "";
+            tempNotifFile = "";
+            tempNotifFileName = "";
+            document.getElementById('notifFileNameDisplay').innerText = "No file attached";
+            renderAdminNotificationList();
+            openModal('adminNotificationModal');
+        }
+
+        function handleNotifFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 900000) { showToast("⚠️ File size must be under 900KB."); return; }
+            const reader = new FileReader();
+            reader.onload = evt => {
+                tempNotifFile = evt.target.result;
+                tempNotifFileName = file.name;
+                document.getElementById('notifFileNameDisplay').innerText = `Attached: ${file.name}`;
+                showToast("File attached successfully!");
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveAdminNotification(e) {
+            e.preventDefault();
+            const editIdx = parseInt(document.getElementById('editNotifIndex').value);
+            const title = document.getElementById('notifTitle').value.trim();
+            const message = document.getElementById('notifMsg').value.trim();
+            if (!title || !message) return;
+
+            const notifData = {
+                title, message,
+                fileData: tempNotifFile,
+                fileName: tempNotifFileName,
+                hidden: false,
+                time: new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+            };
+
+            if (editIdx >= 0) {
+                window.notificationsList[editIdx] = notifData;
+                showToast("Notification updated successfully!");
+            } else {
+                window.notificationsList.unshift(notifData);
+                showToast("Notification broadcasted successfully!");
+            }
+
+            tempNotifFile = "";
+            tempNotifFileName = "";
+            saveToLocalCache();
+            updateCrestLogoDisplay();
+            closeModal('adminNotificationModal');
+            if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+        }
+
+        function renderAdminNotificationList() {
+            const container = document.getElementById('adminNotifManageList');
+            if (!container) return;
+            if (!window.notificationsList || window.notificationsList.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 italic text-xs">No notifications created.</p>';
+                return;
+            }
+            container.innerHTML = window.notificationsList.map((n, idx) => `
+                <div class="p-2.5 bg-slate-900 text-white rounded-xl border border-slate-700 flex justify-between items-center text-xs">
+                    <div class="truncate max-w-[200px]">
+                        <span class="font-bold text-purple-400">${n.title}</span> ${n.hidden ? '<span class="text-red-400 text-[10px]">(Hidden)</span>' : ''}
+                        <p class="text-[10px] text-slate-400 truncate">${n.message}</p>
+                    </div>
+                    <div class="flex gap-1">
+                        <button onclick="editAdminNotification(${idx})" class="px-2 py-1 bg-amber-500 text-slate-950 font-bold rounded text-[10px]">Edit</button>
+                        <button onclick="toggleHideNotification(${idx})" class="px-2 py-1 bg-slate-700 text-white font-bold rounded text-[10px]">${n.hidden ? 'Show' : 'Hide'}</button>
+                        <button onclick="deleteAdminNotification(${idx})" class="px-2 py-1 bg-red-600 text-white font-bold rounded text-[10px]">Del</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function editAdminNotification(idx) {
+            const n = window.notificationsList[idx];
+            document.getElementById('editNotifIndex').value = idx;
+            document.getElementById('adminNotifModalTitle').innerText = "Edit Notification";
+            document.getElementById('notifTitle').value = n.title;
+            document.getElementById('notifMsg').value = n.message;
+            tempNotifFile = n.fileData || "";
+            tempNotifFileName = n.fileName || "";
+            document.getElementById('notifFileNameDisplay').innerText = tempNotifFileName ? `Attached: ${tempNotifFileName}` : "No file attached";
+        }
+
+        function toggleHideNotification(idx) {
+            window.notificationsList[idx].hidden = !window.notificationsList[idx].hidden;
+            saveToLocalCache();
+            renderAdminNotificationList();
+            updateCrestLogoDisplay();
+            if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+        }
+
+        function deleteAdminNotification(idx) {
+            if (confirm("Delete this notification?")) {
+                window.notificationsList.splice(idx, 1);
+                saveToLocalCache();
+                renderAdminNotificationList();
+                updateCrestLogoDisplay();
+                if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+                showToast("Notification deleted.");
+            }
+        }
+
+        function openNotificationsModal() {
+            const container = document.getElementById('notificationsListContainer');
+            if (!container) return;
+            const activeNotifs = (window.notificationsList || []).filter(n => !n.hidden);
+            if (activeNotifs.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 italic">No new notifications.</p>';
+            } else {
+                container.innerHTML = activeNotifs.map(n => `
+                    <div class="p-3 bg-slate-900/90 text-white rounded-xl border border-purple-500/30 space-y-1.5">
+                        <div class="flex justify-between items-center">
+                            <span class="font-black text-purple-300 text-xs">${n.title}</span>
+                            <span class="text-[9px] text-slate-400">${n.time}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-200">${n.message}</p>
+                        ${n.fileData ? `
+                            <div class="pt-1 flex gap-2">
+                                <button onclick="promptOpenWith('${n.fileData}', '${n.fileName || 'file'}')" class="text-purple-400 font-bold underline text-[11px] cursor-pointer">Open With</button>
+                                <button onclick="inAppViewFile('${n.fileData}', '${n.fileName || 'file'}')" class="text-emerald-400 font-bold underline text-[11px] cursor-pointer">View</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+            }
+            openModal('notificationsModal');
+        }
+
+        function clearNotifications() {
+            window.notificationsList = window.notificationsList.filter(n => n.hidden);
+            saveToLocalCache();
+            updateCrestLogoDisplay();
+            openNotificationsModal();
+            showToast("Notifications cleared.");
+        }
+
+        function openAddMemberModal() {
+            document.getElementById('newMemberName').value = "";
+            document.getElementById('newMemberOccupation').value = "";
+            document.getElementById('newMemberPhone').value = "+91 ";
+            document.getElementById('newMemberDob').value = "";
+            document.getElementById('newMemberAadhaar').value = "";
+            document.getElementById('newMemberPassKey').value = "";
+            document.getElementById('newMemberAddress').value = "";
+            openModal('addMemberModal');
+        }
+
+        function saveNewMember(e) {
+            e.preventDefault();
+            const name = document.getElementById('newMemberName').value.trim();
+            const occupation = document.getElementById('newMemberOccupation').value.trim();
+            const phone = document.getElementById('newMemberPhone').value.trim();
+            const dob = document.getElementById('newMemberDob').value.trim();
+            const aadhaarMasked = document.getElementById('newMemberAadhaar').value.trim();
+            const passKey = document.getElementById('newMemberPassKey').value.trim();
+            const address = document.getElementById('newMemberAddress').value.trim();
+
+            if (!name) { showToast("Please enter a name."); return; }
+
+            const newMember = {
+                name, occupation: occupation || "Family Member", phone: phone || "+91 ", email: "member@gmail.com",
+                dob: dob || "N/A", gender: "Male", passKey: passKey || "@Sarthak2009", photo: "",
+                address: address || "Nashik", aadhaarMasked: aadhaarMasked || "N/A", hidden: false, slabs: [], statements: [], viksitNotes: []
+            };
+
+            window.familyMembers.push(newMember);
+            saveToLocalCache();
+            closeModal('addMemberModal');
+            renderMembersGrid();
+            if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+        }
+
+        function deleteCurrentMember() {
+            if (window.unlockedMemberIndex === null || window.unlockedMemberIndex === undefined) return;
+            if (confirm("Are you sure you want to delete this profile?")) {
+                window.familyMembers.splice(window.unlockedMemberIndex, 1);
+                window.unlockedMemberIndex = null;
+                backToDashboard();
+                renderMembersGrid();
+                if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+                showToast("Profile deleted.");
+            }
+        }
+
+        function renderDirectoryList() {
+            const container = document.getElementById('directoryListContainer');
+            if (!container) return;
+            container.innerHTML = window.directoryData.map(d => `
+                <div class="p-3 bg-white/70 dark:bg-slate-800 rounded-2xl border">
+                    <h4 class="font-bold text-purple-600">${d.name}</h4>
+                    <p class="text-[11px]">Phone 1: <a href="tel:${d.phone1}" class="font-mono font-bold text-slate-800 dark:text-slate-200">${d.phone1}</a></p>
+                    ${d.phone2 ? `<p class="text-[11px]">Phone 2: <a href="tel:${d.phone2}" class="font-mono font-bold text-slate-800 dark:text-slate-200">${d.phone2}</a></p>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function openEditDirectoryModal() {
+            const container = document.getElementById('editDirectoryFormContainer');
+            if (!container) return;
+            container.innerHTML = window.directoryData.map((d, idx) => `
+                <div class="p-2.5 bg-white dark:bg-slate-800 rounded-xl border space-y-2 mb-2" data-dir-index="${idx}">
+                    <div class="flex justify-between items-center">
+                        <input type="text" value="${d.name}" placeholder="Name" class="dir-name p-1 bg-slate-50 dark:bg-slate-900 rounded border text-xs font-bold w-32">
+                        <button type="button" onclick="removeDirectoryItem(${idx})" class="text-red-500 text-xs font-bold px-1 cursor-pointer">Delete</button>
+                    </div>
+                    <input type="text" value="${d.phone1}" placeholder="Phone 1" class="dir-phone1 w-full p-1 bg-slate-50 dark:bg-slate-900 rounded border text-xs font-mono">
+                    <input type="text" value="${d.phone2 || ''}" placeholder="Phone 2" class="dir-phone2 w-full p-1 bg-slate-50 dark:bg-slate-900 rounded border text-xs font-mono">
+                </div>
+            `).join('');
+            openModal('editDirectoryModal');
+        }
+
+        function addNewDirectoryItem() {
+            window.directoryData.push({ name: "New Contact", phone1: "+91 ", phone2: "" });
+            openEditDirectoryModal();
+        }
+
+        function removeDirectoryItem(idx) {
+            window.directoryData.splice(idx, 1);
+            openEditDirectoryModal();
+        }
+
+        function saveEditedDirectory() {
+            const container = document.getElementById('editDirectoryFormContainer');
+            const items = container.querySelectorAll('[data-dir-index]');
+            const updated = [];
+            items.forEach(item => {
+                const name = item.querySelector('.dir-name').value;
+                const phone1 = item.querySelector('.dir-phone1').value;
+                const phone2 = item.querySelector('.dir-phone2').value;
+                if (name && phone1) updated.push({ name, phone1, phone2 });
+            });
+            window.directoryData = updated;
+            closeModal('editDirectoryModal');
+            renderDirectoryList();
+            if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+            showToast("Directory updated successfully!");
+        }
+
+        function renderWifiDetails() {
+            if (!window.wifiData) return;
+            document.getElementById('wifi1Ssid').innerText = window.wifiData.wifi1Ssid || "Airtel_Sarthak";
+            document.getElementById('wifi1Pass').innerText = window.wifiData.wifi1Pass || "Sarthak @9673465849";
+            document.getElementById('wifi2Ssid').innerText = window.wifiData.wifi2Ssid || "Sarthak";
+            document.getElementById('wifi2Pass').innerText = window.wifiData.wifi2Pass || "Sarthak @9673465849";
+
+            const qr1 = document.getElementById('wifi1QrContainer');
+            const qr2 = document.getElementById('wifi2QrContainer');
+            if (qr1) qr1.innerHTML = window.wifiData.wifi1Qr ? `<img src="${window.wifiData.wifi1Qr}" class="w-full h-full object-contain">` : `<span class="text-[10px] text-slate-400">No QR</span>`;
+            if (qr2) qr2.innerHTML = window.wifiData.wifi2Qr ? `<img src="${window.wifiData.wifi2Qr}" class="w-full h-full object-contain">` : `<span class="text-[10px] text-slate-400">No QR</span>`;
+        }
+
+        function toggleAdminLoginModal() {
+            if (window.isAdminLoggedIn) logoutAdmin();
+            else openModal('adminModal');
+        }
+
+        function verifyAdminPassword(e) {
+            e.preventDefault();
+            const val = document.getElementById('adminPassInput').value.trim();
+            if (val === "@Sarthak2009" || val === "ADMIN2009") {
+                window.isAdminLoggedIn = true;
+                closeModal('adminModal');
+                document.getElementById('adminPassInput').value = '';
+                document.getElementById('adminPassError').classList.add('hidden');
+                document.getElementById('adminNoticeBar').classList.remove('hidden');
+                const navAdminBtn = document.getElementById('adminNavBtnLabel');
+                if (navAdminBtn) navAdminBtn.innerText = "Admin Active";
+                document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+                renderMembersGrid();
+                showToast("Admin Logged In successfully!");
+            } else {
+                document.getElementById('adminPassError').classList.remove('hidden');
+            }
+        }
+
+        function logoutAdmin() {
+            window.isAdminLoggedIn = false;
+            document.getElementById('adminNoticeBar').classList.add('hidden');
+            const navAdminBtn = document.getElementById('adminNavBtnLabel');
+            if (navAdminBtn) navAdminBtn.innerText = "ADMIN";
+            document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+            renderMembersGrid();
+            showToast("Admin Logged Out");
+        }
+
+        function openModal(id, index = 0) {
+            if (id === 'passwordModal') {
+                window.targetAuthIndex = index;
+            }
+            const modalEl = document.getElementById(id);
+            if (modalEl) modalEl.classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            const modalEl = document.getElementById(id);
+            if (modalEl) modalEl.classList.add('hidden');
+        }
+
+        function verifyPassword(e) {
+            e.preventDefault();
+            const passInput = document.getElementById('passInput');
+            const pass = passInput ? passInput.value.trim() : '';
+            
+            if (window.isAdminLoggedIn) {
+                closeModal('passwordModal');
+                if (passInput) passInput.value = '';
+                openProfileHub(window.targetAuthIndex);
+                return;
+            }
+
+            let matchedIndex = window.familyMembers.findIndex(m => m.passKey === pass || pass === "@Sarthak2009");
+            if (matchedIndex !== -1) {
+                closeModal('passwordModal');
+                if (passInput) passInput.value = '';
+                openProfileHub(matchedIndex);
+            } else {
+                showToast("Incorrect Account Holder's Password!");
+            }
+        }
+
+        function openProfileHub(index) {
+            if (index === null || index === undefined || !window.familyMembers[index]) return;
+            window.unlockedMemberIndex = index;
+            const member = window.familyMembers[index];
+            document.getElementById('hubName').innerText = member.name;
+            document.getElementById('hubPhone').innerText = member.phone;
+            document.getElementById('hubDob').innerText = member.dob;
+            document.getElementById('hubGender').innerText = member.gender || "Male";
+            document.getElementById('hubAadhaar').innerText = member.aadhaarMasked;
+            document.getElementById('hubAddress').innerText = member.address;
+            document.getElementById('hubPassKey').innerText = member.passKey;
+
+            const initials = getInitials(member.name);
+            document.getElementById('hubPhoto').src = member.photo || createAvatarSVG(initials);
+
+            renderSlabsAndStatements(member);
+            renderViksitNotes(member);
+
+            if (window.isAdminLoggedIn) {
+                document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+            }
+
+            document.getElementById('mainDashboardView').classList.add('hidden');
+            document.getElementById('profileHubPageView').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function backToDashboard() {
+            document.getElementById('profileHubPageView').classList.add('hidden');
+            document.getElementById('mainDashboardView').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function openActivityLogModal() {
+            const container = document.getElementById('activityLogListContainer');
+            if (!container) return;
+            if (!window.activityLogs || window.activityLogs.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 italic">No activity recorded yet.</p>';
+            } else {
+                container.innerHTML = window.activityLogs.map(log => `
+                    <div class="p-2.5 bg-slate-900/80 text-white rounded-xl border border-slate-700 flex justify-between items-center text-xs">
+                        <div>
+                            <span class="font-bold text-purple-400">[${log.action}]</span>
+                            <p class="font-mono text-slate-300 mt-0.5 truncate max-w-[200px]">${log.fileName}</p>
+                        </div>
+                        <span class="text-[10px] text-slate-400">${log.time}</span>
+                    </div>
+                `).join('');
+            }
+            openModal('activityLogModal');
+        }
+
+        function clearActivityLogs() {
+            window.activityLogs = [];
+            saveToLocalCache();
+            openActivityLogModal();
+            showToast("Activity history cleared!");
+        }
+
+        function renderViksitNotes(member) {
+            const container = document.getElementById('viksitLinksContainer');
+            if (!container) return;
+            if (!member.viksitNotes || member.viksitNotes.length === 0) {
+                container.innerHTML = '<p class="text-[11px] text-slate-400 italic">No VIKSIT notes or apps added yet.</p>';
+                return;
+            }
+            container.innerHTML = member.viksitNotes.map((v, vIdx) => `
+                <div class="p-3 bg-slate-900/90 rounded-2xl border border-purple-500/30 space-y-2 text-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="font-black text-purple-300 text-sm">${v.title}</span>
+                        <div class="flex items-center gap-1.5">
+                            <button class="admin-only ${window.isAdminLoggedIn?'':'hidden'} px-2 py-0.5 bg-amber-500 text-slate-950 font-bold rounded text-[10px]" onclick="openEditViksitModal(${vIdx})">Edit</button>
+                            <button class="admin-only ${window.isAdminLoggedIn?'':'hidden'} px-2 py-0.5 bg-red-600 text-white font-bold rounded text-[10px]" onclick="deleteViksitNote(${vIdx})">Delete</button>
+                        </div>
+                    </div>
+                    <p class="${v.fontSize || 'text-xs'} ${v.isBold ? 'font-bold' : 'font-normal'} text-slate-200 whitespace-pre-wrap">${v.desc || ''}</p>
+                    ${v.fileData ? `
+                        <div class="flex items-center justify-between bg-slate-800 p-2 rounded-xl border border-purple-500/20">
+                            <span class="truncate text-[11px] text-purple-200 font-mono">📎 ${v.fileName || 'Attached File'}</span>
+                            <div class="flex gap-2">
+                                <button onclick="promptOpenWith('${v.fileData}', '${v.fileName || 'file'}')" class="text-purple-400 font-bold underline text-[11px] cursor-pointer">Open With</button>
+                                <button onclick="inAppViewFile('${v.fileData}', '${v.fileName || 'file'}')" class="text-emerald-400 font-bold underline text-[11px] cursor-pointer">View</button>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function openAddViksitModal() {
+            document.getElementById('editViksitIndex').value = "-1";
+            document.getElementById('viksitModalTitle').innerText = "Add VIKSIT Note / App";
+            document.getElementById('viksitTitleInput').value = "";
+            document.getElementById('viksitDescInput').value = "";
+            document.getElementById('viksitFontSize').value = "text-xs";
+            tempViksitFile = "";
+            tempViksitFileName = "";
+            document.getElementById('viksitFileNameDisplay').innerText = "No file selected";
+            openModal('addViksitModal');
+        }
+
+        function openEditViksitModal(vIdx) {
+            const member = window.familyMembers[window.unlockedMemberIndex];
+            const v = member.viksitNotes[vIdx];
+            document.getElementById('editViksitIndex').value = vIdx;
+            document.getElementById('viksitModalTitle').innerText = "Edit VIKSIT Note";
+            document.getElementById('viksitTitleInput').value = v.title || "";
+            document.getElementById('viksitDescInput').value = v.desc || "";
+            document.getElementById('viksitFontSize').value = v.fontSize || "text-xs";
+            tempViksitFile = v.fileData || "";
+            tempViksitFileName = v.fileName || "";
+            document.getElementById('viksitFileNameDisplay').innerText = tempViksitFileName ? `Attached: ${tempViksitFileName}` : "No file selected";
+            openModal('addViksitModal');
+        }
+
+        function formatViksitText(type) {
+            const textarea = document.getElementById('viksitDescInput');
+            if (type === 'bold') {
+                textarea.value = `**${textarea.value}**`;
+                showToast("Text marked bold!");
+            }
+        }
+
+        function changeViksitFontSize(sizeClass) {
+            const textarea = document.getElementById('viksitDescInput');
+            textarea.className = `w-full p-2.5 bg-slate-900/80 rounded-xl border border-purple-500/40 text-white placeholder-slate-400 ${sizeClass}`;
+        }
+
+        function handleViksitFileInput(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 900000) { showToast("⚠️ File size must be under 900KB."); return; }
+            const reader = new FileReader();
+            reader.onload = evt => {
+                tempViksitFile = evt.target.result;
+                tempViksitFileName = file.name;
+                document.getElementById('viksitFileNameDisplay').innerText = `Attached: ${file.name}`;
+                showToast("File attached successfully!");
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveNewViksitNote(e) {
+            e.preventDefault();
+            const editIdx = parseInt(document.getElementById('editViksitIndex').value);
+            const title = document.getElementById('viksitTitleInput').value.trim();
+            const desc = document.getElementById('viksitDescInput').value.trim();
+            const fontSize = document.getElementById('viksitFontSize').value;
+            const isBold = desc.startsWith("**") && desc.endsWith("**");
+            const cleanDesc = isBold ? desc.slice(2, -2) : desc;
+
+            const member = window.familyMembers[window.unlockedMemberIndex];
+            if (!member.viksitNotes) member.viksitNotes = [];
+
+            const noteData = {
+                title, desc: cleanDesc, fontSize, isBold,
+                fileData: tempViksitFile, fileName: tempViksitFileName
+            };
+
+            if (editIdx >= 0) {
+                member.viksitNotes[editIdx] = noteData;
+                showToast("VIKSIT note updated!");
+            } else {
+                member.viksitNotes.push(noteData);
+                showToast("VIKSIT note created!");
+            }
+
+            tempViksitFile = "";
+            tempViksitFileName = "";
+            closeModal('addViksitModal');
+            openProfileHub(window.unlockedMemberIndex);
+            if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+        }
+
+        function deleteViksitNote(vIdx) {
+            if (confirm("Delete this VIKSIT note?")) {
+                window.familyMembers[window.unlockedMemberIndex].viksitNotes.splice(vIdx, 1);
+                openProfileHub(window.unlockedMemberIndex);
+                if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+                showToast("VIKSIT note deleted.");
+            }
+        }
+
+        // Native File Share & Download Handler for WebView
+        function promptOpenWith(dataUrl, filename) {
+            activeFileUrl = dataUrl;
+            activeFileName = filename || "document";
+            document.getElementById('openWithFileName').innerText = activeFileName;
+            openModal('openWithModal');
+        }
+
+        function executeOpenWith(actionType) {
+            closeModal('openWithModal');
+            logActivity("OPEN WITH (" + actionType.toUpperCase() + ")", activeFileName);
+
+            if (actionType === 'adobe' || actionType === 'gallery' || actionType === 'files') {
+                showToast("Opening with external app handler...");
+                try {
+                    const arr = activeFileUrl.split(',');
+                    const mime = arr[0].match(/:(.*?);/)[1];
+                    const bstr = atob(arr[1]);
+                    let n = bstr.length;
+                    const u8arr = new Uint8Array(n);
+                    while (n--) { u8arr[n] = bstr.charCodeAt(n); }
+                    const blob = new Blob([u8arr], { type: mime });
+                    
+                    if (navigator.canShare && navigator.canShare({ files: [new File([blob], activeFileName, { type: mime })] })) {
+                        navigator.share({
+                            files: [new File([blob], activeFileName, { type: mime })],
+                            title: activeFileName,
+                            text: 'Sharing file from Lande Family Portal'
+                        }).catch(() => {});
+                    } else {
+                        const blobUrl = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = blobUrl;
+                        a.download = activeFileName;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
+                    }
+                } catch(e) {
+                    inAppViewFile(activeFileUrl, activeFileName);
+                }
+            } else {
+                inAppViewFile(activeFileUrl, activeFileName);
+            }
+        }
+
+        function inAppViewFile(dataUrl, filename) {
+            logActivity("VIEW", filename || "document");
+            const titleEl = document.getElementById('viewerFileTitle');
+            const wrapper = document.getElementById('viewerContentWrapper');
+            if (titleEl) titleEl.innerText = filename || "Document Preview";
+            
+            if (dataUrl.startsWith('data:image/') || dataUrl.includes('image/')) {
+                wrapper.innerHTML = `<img src="${dataUrl}" class="max-w-full max-h-full object-contain rounded-xl shadow-lg">`;
+            } else if (dataUrl.startsWith('data:video/')) {
+                wrapper.innerHTML = `<video src="${dataUrl}" controls autoplay class="max-w-full max-h-full rounded-xl shadow-lg"></video>`;
+            } else {
+                wrapper.innerHTML = `<iframe src="${dataUrl}" class="w-full h-full rounded-xl bg-white border-0" frameborder="0"></iframe>`;
+            }
+            openModal('documentViewerModal');
+        }
+
+        function renderSlabsAndStatements(member) {
+            const container = document.getElementById('slabsAndStatementsContainer');
+            if (!container) return;
+            let html = '';
+
+            if (member.slabs && member.slabs.length > 0) {
+                member.slabs.forEach((slab, sIdx) => {
+                    const iconDisplay = slab.icon ? `<img src="${slab.icon}" class="w-full h-full object-cover rounded">` : '📁';
+                    html += `
+                    <div class="p-3 bg-white/80 dark:bg-slate-800 rounded-2xl border space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-xs flex items-center gap-2">
+                                <div class="w-6 h-6 rounded bg-slate-200 flex items-center justify-center overflow-hidden shrink-0">${iconDisplay}</div>
+                                ${slab.title}
+                            </span>
+                            <div class="flex gap-1.5 items-center">
+                                <button onclick="openEditSlabModal(${sIdx})" class="admin-only ${window.isAdminLoggedIn?'':'hidden'} px-2 py-1 bg-amber-500 text-slate-950 rounded text-[10px] font-bold cursor-pointer" title="Rename Folder">✏️</button>
+                                <button onclick="triggerSlabFileUpload(${sIdx})" class="admin-only ${window.isAdminLoggedIn?'':'hidden'} px-2 py-1 bg-purple-600 text-white rounded text-[10px] font-bold cursor-pointer" title="Upload File">📤</button>
+                                <button onclick="deleteSlab(${sIdx})" class="admin-only ${window.isAdminLoggedIn?'':'hidden'} text-red-500 text-xs px-1 cursor-pointer font-bold" title="Delete">✕</button>
+                            </div>
+                        </div>
+                        <div class="pl-3 border-l-2 border-purple-400 space-y-1">
+                            ${(slab.files && slab.files.length > 0) ? slab.files.map((f, fIdx) => `
+                                <div class="flex justify-between items-center text-[11px] bg-slate-50 dark:bg-slate-900 p-1.5 rounded-xl border">
+                                    <span class="truncate max-w-[120px] font-semibold">${f.name}</span>
+                                    <div class="flex gap-1.5">
+                                        <button onclick="promptOpenWith('${f.data}', '${f.name}')" class="text-purple-600 font-bold underline cursor-pointer">Download</button>
+                                        <button onclick="inAppViewFile('${f.data}', '${f.name}')" class="text-emerald-500 font-bold underline cursor-pointer">View</button>
+                                        <button onclick="deleteSlabFile(${sIdx}, ${fIdx})" class="admin-only ${window.isAdminLoggedIn?'':'hidden'} text-red-500 font-bold">×</button>
+                                    </div>
+                                </div>
+                            `).join('') : '<p class="text-[10px] text-slate-400">No files in folder.</p>'}
+                        </div>
+                    </div>`;
+                });
+            }
+
+            if (member.statements && member.statements.length > 0) {
+                member.statements.forEach((st, stIdx) => {
+                    const logoDisplay = st.logo ? `<img src="${st.logo}" class="w-full h-full object-cover rounded">` : '🏦';
+                    html += `
+                    <div class="p-3 bg-white/80 dark:bg-slate-800 rounded-2xl border flex items-center justify-between text-xs">
+                        <div class="flex items-center space-x-2.5">
+                            <div class="w-7 h-7 rounded bg-slate-200 flex items-center justify-center overflow-hidden shrink-0">${logoDisplay}</div>
+                            <div>
+                                <h4 class="font-bold">${st.name}</h4>
+                                <p class="text-[10px] text-slate-400">${st.details}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${st.pdf ? `<button onclick="promptOpenWith('${st.pdf}', '${st.name}')" class="text-purple-600 font-bold underline text-[11px] cursor-pointer">Download</button>` : ''}
+                            ${st.pdf ? `<button onclick="inAppViewFile('${st.pdf}', '${st.name}')" class="text-emerald-500 font-bold underline text-[11px] cursor-pointer">View</button>` : ''}
+                            <button onclick="deleteStatement(${stIdx})" class="admin-only ${window.isAdminLoggedIn?'':'hidden'} text-red-500 font-bold">×</button>
+                        </div>
+                    </div>`;
+                });
+            }
+
+            if (!html) html = '<p class="text-xs text-slate-400 italic">No Slabs or Statements added yet.</p>';
+            container.innerHTML = html;
+        }
+
+        let editingSlabIndex = null;
+        function openAddSlabModal() {
+            editingSlabIndex = null;
+            document.getElementById('slabModalTitle').innerText = "Create Slab Folder";
+            document.getElementById('slabTitleInput').value = "";
+            tempSlabIcon = "";
+            openModal('addSlabModal');
+        }
+
+        function openEditSlabModal(sIdx) {
+            editingSlabIndex = sIdx;
+            const member = window.familyMembers[window.unlockedMemberIndex];
+            document.getElementById('slabModalTitle').innerText = "Rename Slab Folder";
+            document.getElementById('slabTitleInput').value = member.slabs[sIdx].title;
+            tempSlabIcon = member.slabs[sIdx].icon || "";
+            openModal('addSlabModal');
+        }
+
+        function handleSlabIconUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            compressImage(file, 100, 0.6, (compressedBase64) => {
+                tempSlabIcon = compressedBase64;
+                showToast("Folder Custom Icon Loaded ✓");
+            });
+        }
+
+        function saveNewSlab(e) {
+            e.preventDefault();
+            const title = document.getElementById('slabTitleInput').value.trim();
+            const member = window.familyMembers[window.unlockedMemberIndex];
+            if (!member.slabs) member.slabs = [];
+            
+            if (editingSlabIndex !== null && editingSlabIndex >= 0) {
+                member.slabs[editingSlabIndex].title = title;
+                if (tempSlabIcon) member.slabs[editingSlabIndex].icon = tempSlabIcon;
+                showToast("Folder renamed successfully!");
+            } else {
+                member.slabs.push({ title, icon: tempSlabIcon, files: [] });
+                showToast("Folder created successfully!");
+            }
+            tempSlabIcon = "";
+            closeModal('addSlabModal');
+            openProfileHub(window.unlockedMemberIndex);
+            if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+        }
+
+        function deleteSlab(sIdx) {
+            if (confirm("Delete this folder?")) {
+                window.familyMembers[window.unlockedMemberIndex].slabs.splice(sIdx, 1);
+                openProfileHub(window.unlockedMemberIndex);
+                if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+                showToast("Folder deleted.");
+            }
+        }
+
+        function deleteSlabFile(sIdx, fIdx) {
+            window.familyMembers[window.unlockedMemberIndex].slabs[sIdx].files.splice(fIdx, 1);
+            openProfileHub(window.unlockedMemberIndex);
+            if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+            showToast("File deleted.");
+        }
+
+        function triggerSlabFileUpload(sIdx) { targetSlabIndex = sIdx; document.getElementById('slabFileInput').click(); }
+        function handleSlabFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 900000) { showToast("⚠️ File size must be under 900KB."); return; }
+            const reader = new FileReader();
+            reader.onload = evt => {
+                const member = window.familyMembers[window.unlockedMemberIndex];
+                if (!member.slabs[targetSlabIndex].files) member.slabs[targetSlabIndex].files = [];
+                member.slabs[targetSlabIndex].files.push({ name: file.name, data: evt.target.result });
+                openProfileHub(window.unlockedMemberIndex);
+                if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+                showToast("File uploaded successfully!");
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function openAddStatementModal() {
+            document.getElementById('statementNameInput').value = "";
+            document.getElementById('statementDetailsInput').value = "";
+            tempStatementLogo = "";
+            tempStatementPdf = "";
+            openModal('addStatementModal');
+        }
+
+        function handleStatementLogoUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            compressImage(file, 100, 0.6, (compressedBase64) => {
+                tempStatementLogo = compressedBase64;
+                showToast("Statement Logo Loaded ✓");
+            });
+        }
+
+        function handleStatementFileInput(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 900000) { showToast("⚠️ Statement file must be under 900KB."); return; }
+            const reader = new FileReader();
+            reader.onload = evt => { tempStatementPdf = evt.target.result; showToast("Statement file loaded ✓"); };
+            reader.readAsDataURL(file);
+        }
+
+        function saveNewStatement(e) {
+            e.preventDefault();
+            const name = document.getElementById('statementNameInput').value.trim();
+            const details = document.getElementById('statementDetailsInput').value.trim();
+            const member = window.familyMembers[window.unlockedMemberIndex];
+            if (!member.statements) member.statements = [];
+            member.statements.push({ name, details, logo: tempStatementLogo, pdf: tempStatementPdf });
+            tempStatementLogo = "";
+            tempStatementPdf = "";
+            closeModal('addStatementModal');
+            openProfileHub(window.unlockedMemberIndex);
+            if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+            showToast("Statement record added!");
+        }
+
+        function deleteStatement(stIdx) {
+            window.familyMembers[window.unlockedMemberIndex].statements.splice(stIdx, 1);
+            openProfileHub(window.unlockedMemberIndex);
+            if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+            showToast("Statement deleted.");
+        }
+
+        function openEditProfileModal() {
+            if (window.unlockedMemberIndex === null) return;
+            const member = window.familyMembers[window.unlockedMemberIndex];
+            document.getElementById('editMemberName').value = member.name;
+            document.getElementById('editMemberPhone').value = member.phone;
+            document.getElementById('editMemberDob').value = member.dob;
+            document.getElementById('editMemberAadhaar').value = member.aadhaarMasked;
+            document.getElementById('editMemberPassKey').value = member.passKey;
+            document.getElementById('editMemberAddress').value = member.address;
+            openModal('editProfileModal');
+        }
+
+        function saveEditedProfile(e) {
+            e.preventDefault();
+            if (window.unlockedMemberIndex === null) return;
+            const member = window.familyMembers[window.unlockedMemberIndex];
+            member.name = document.getElementById('editMemberName').value.trim();
+            member.phone = document.getElementById('editMemberPhone').value.trim();
+            member.dob = document.getElementById('editMemberDob').value.trim();
+            member.aadhaarMasked = document.getElementById('editMemberAadhaar').value.trim();
+            member.passKey = document.getElementById('editMemberPassKey').value.trim();
+            member.address = document.getElementById('editMemberAddress').value.trim();
+
+            closeModal('editProfileModal');
+            openProfileHub(window.unlockedMemberIndex);
+            renderMembersGrid();
+            if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+            showToast("Profile updated!");
+        }
+
+        function triggerPhotoCropper(index) {
+            cropTargetDocIndex = index;
+            document.getElementById('photoFileInput').click();
+        }
+
+        function handlePhotoUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = evt => {
+                cropImg.onload = () => {
+                    const canvas = document.getElementById('cropCanvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = 120; canvas.height = 120;
+                    ctx.drawImage(cropImg, 0, 0, 120, 120);
+                    openModal('cropperModal');
+                };
+                cropImg.src = evt.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveCroppedPhoto() {
+            const canvas = document.getElementById('cropCanvas');
+            window.familyMembers[cropTargetDocIndex].photo = canvas.toDataURL('image/jpeg', 0.6);
+            renderMembersGrid();
+            openProfileHub(cropTargetDocIndex);
+            closeModal('cropperModal');
+            if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+            showToast("Photo updated & synced live!");
+        }
+
+        function triggerLogoUpload() { document.getElementById('logoFileInput').click(); }
+        function handleLogoUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            compressImage(file, 150, 0.6, (compressedBase64) => {
+                window.customCrestLogo = compressedBase64;
+                localStorage.setItem('lande_crest_logo', window.customCrestLogo);
+                if (typeof window.updateCrestLogoDisplay === 'function') window.updateCrestLogoDisplay();
+                if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+                showToast("Crest Logo Updated!");
+            });
+        }
+
+        function openAddressModal() {
+            openModal('addressModal');
+            setTimeout(() => {
+                if (!window.locationsData || window.locationsData.length === 0) return;
+                const loc = window.locationsData[0];
+                if (!window.mapInstance) {
+                    window.mapInstance = L.map('mapContainer').setView([loc.lat, loc.lng], 14);
+                    currentTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(window.mapInstance);
+                    
+                    window.mapInstance.on('click', function(e) {
+                        clickedLat = e.latlng.lat;
+                        clickedLng = e.latlng.lng;
+                        document.getElementById('inputLocLat').value = clickedLat.toFixed(5);
+                        document.getElementById('inputLocLng').value = clickedLng.toFixed(5);
+                        openModal('addLocationModal');
+                    });
+                } else {
+                    window.mapInstance.setView([loc.lat, loc.lng], 14);
+                    window.mapInstance.invalidateSize();
+                }
+                
+                window.locationsData.forEach(l => {
+                    L.marker([l.lat, l.lng]).addTo(window.mapInstance).bindPopup(`<b>${l.title}</b><br>${l.desc}`);
+                });
+
+                renderHomeLocationsList();
+            }, 300);
+        }
+
+        function changeMapLayer(type) {
+            if (!window.mapInstance) return;
+            if (currentTileLayer) window.mapInstance.removeLayer(currentTileLayer);
+            
+            if (type === 'satellite') {
+                currentTileLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(window.mapInstance);
+            } else if (type === 'terrain') {
+                currentTileLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17 }).addTo(window.mapInstance);
+            } else {
+                currentTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(window.mapInstance);
+            }
+        }
+
+        function renderHomeLocationsList() {
+            const listContainer = document.getElementById('homeLocationsList');
+            if (!listContainer) return;
+            listContainer.innerHTML = window.locationsData.map((l, lIdx) => `
+                <div class="px-3 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-xl text-xs flex items-center gap-2">
+                    <span class="font-bold text-purple-600">${l.title}</span>
+                    <button onclick="window.mapInstance.setView([${l.lat}, ${l.lng}], 16)" class="text-xs underline text-cyan-600">View</button>
+                    ${window.isAdminLoggedIn ? `<button onclick="deleteLocation(${lIdx})" class="text-red-500 font-bold ml-1">×</button>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function openAddLocationModal() {
+            document.getElementById('inputLocName').value = "";
+            document.getElementById('inputLocDesc').value = "";
+            document.getElementById('inputLocLat').value = clickedLat.toFixed(5);
+            document.getElementById('inputLocLng').value = clickedLng.toFixed(5);
+            openModal('addLocationModal');
+        }
+
+        function saveNewLocation(e) {
+            e.preventDefault();
+            const title = document.getElementById('inputLocName').value.trim();
+            const desc = document.getElementById('inputLocDesc').value.trim();
+            const lat = parseFloat(document.getElementById('inputLocLat').value);
+            const lng = parseFloat(document.getElementById('inputLocLng').value);
+
+            window.locationsData.push({ id: Date.now(), title, desc, lat, lng });
+            saveToLocalCache();
+            closeModal('addLocationModal');
+            if (window.mapInstance) {
+                L.marker([lat, lng]).addTo(window.mapInstance).bindPopup(`<b>${title}</b><br>${desc}`);
+                window.mapInstance.setView([lat, lng], 15);
+            }
+            renderHomeLocationsList();
+            if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+            showToast("New Home Location Saved!");
+        }
+
+        function deleteLocation(lIdx) {
+            window.locationsData.splice(lIdx, 1);
+            saveToLocalCache();
+            renderHomeLocationsList();
+            if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+            showToast("Location removed.");
+        }
+
+        function toggleTheme() {
+            const htmlEl = document.documentElement;
+            const btn = document.getElementById('squareThemeBtn');
+            if (htmlEl.classList.contains('dark')) {
+                htmlEl.classList.remove('dark');
+                htmlEl.classList.add('light');
+                if(btn) btn.className = "w-9 h-9 rounded-lg border-2 border-slate-300 bg-blue-600 cursor-pointer relative z-20 shadow-sm transition-transform hover:scale-105";
+                localStorage.setItem('lande_theme', 'light');
+            } else {
+                htmlEl.classList.remove('light');
+                htmlEl.classList.add('dark');
+                if(btn) btn.className = "w-9 h-9 rounded-lg border-2 border-slate-700 bg-white cursor-pointer relative z-20 shadow-sm transition-transform hover:scale-105";
+                localStorage.setItem('lande_theme', 'dark');
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+            toast.innerText = msg;
+            toast.classList.remove('opacity-0');
+            setTimeout(() => toast.classList.add('opacity-0'), 2500);
+        }
+
+        window.onload = function() {
+            if (typeof window.updateCrestLogoDisplay === 'function') window.updateCrestLogoDisplay();
+            renderMembersGrid();
+            renderDirectoryList();
+            renderWifiDetails();
+
+            const savedTheme = localStorage.getItem('lande_theme') || 'light';
+            const btn = document.getElementById('squareThemeBtn');
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+                if(btn) btn.className = "w-9 h-9 rounded-lg border-2 border-slate-700 bg-white cursor-pointer relative z-20 shadow-sm transition-transform hover:scale-105";
+            } else {
+                if(btn) btn.className = "w-9 h-9 rounded-lg border-2 border-slate-300 bg-blue-600 cursor-pointer relative z-20 shadow-sm transition-transform hover:scale-105";
+            }
+        };
+    </script>
+</body>
+</html>
