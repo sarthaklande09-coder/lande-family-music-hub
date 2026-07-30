@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lande Family Portal & Spatial Music Hub</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        viksitDark: '#070b14',
+                        viksitRed: '#e11d48',
+                        viksitPurple: '#7c3aed',
+                        spatialGlass: 'rgba(255, 255, 255, 0.08)'
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; width: 100vw; max-width: 100%; transition: background-color 0.3s ease, color 0.3s ease; }
+        .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(16px); border: 1px solid rgba(225, 29, 72, 0.15); box-shadow: 0 10px 30px 0 rgba(225, 29, 72, 0.05); }
+        .dark .glass-panel { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.5); }
+        .glass-modal { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(20px); }
+        .dark .glass-modal { background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(20px); }
+        .glow-btn { background: linear-gradient(135deg, #e11d48 0%, #7c3aed 100%); box-shadow: 0 4px 20px rgba(225, 29, 72, 0.35); }
+        .segmented-container { background: rgba(225, 29, 72, 0.06); border: 1px solid rgba(225, 29, 72, 0.15); backdrop-filter: blur(12px); }
+        .dark .segmented-container { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .segment-tab { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .segment-tab.active { background: #e11d48; color: #ffffff; box-shadow: 0 6px 20px rgba(225, 29, 72, 0.4); }
+        .spatial-glass { background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 30px 70px rgba(0,0,0,0.8); }
+        .playlist-card-active { background: rgba(16, 185, 129, 0.2) !important; border-color: rgba(16, 185, 129, 0.5) !important; }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 min-h-screen pb-20 relative w-full overflow-x-hidden">
+
+    <!-- Header / Navbar -->
+    <header class="sticky top-0 z-40 w-full backdrop-blur-xl bg-white/80 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between w-full">
+            <div class="flex items-center space-x-3 cursor-pointer select-none" onclick="triggerLogoUpload()" title="Logo Badlein">
+                <div id="headerLogoContainer" class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#e11d48] via-[#7c3aed] to-[#3b82f6] flex items-center justify-center text-white shadow-lg relative group shrink-0 overflow-hidden">
+                    <img id="appHeaderLogoImg" src="" alt="Logo" class="w-full h-full object-cover hidden">
+                    <svg id="appHeaderLogoSvg" class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                </div>
+                <div>
+                    <h1 class="font-black text-base sm:text-lg bg-gradient-to-r from-[#e11d48] via-[#7c3aed] to-[#3b82f6] bg-clip-text text-transparent leading-tight">
+                        Lande Family Portal
+                    </h1>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold tracking-wide">Sabka Apna Sangeet</p>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex items-center space-x-2 shrink-0">
+                <button onclick="openCloudStatusModal()" class="px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer hover:bg-emerald-500/20 transition">
+                    <span id="syncIndicator" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="hidden sm:inline">Check Cloud</span>
+                </button>
+                <button onclick="openNotificationsModal()" class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 flex items-center justify-center cursor-pointer relative z-20 text-sm shadow-sm">
+                    🔔 <span id="notifBadge" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Capsule Menu -->
+    <div class="max-w-7xl mx-auto px-4 pt-4">
+        <div class="segmented-container rounded-2xl p-1.5 flex items-center justify-between gap-1 overflow-x-auto shadow-sm">
+            <button onclick="switchNavTab('home')" id="tabHome" class="segment-tab active flex-1 py-2.5 px-3 rounded-xl text-center flex items-center justify-center gap-1.5 cursor-pointer text-xs font-black">
+                <span>🏠</span><span class="truncate">Home</span>
+            </button>
+            <button onclick="switchNavTab('groups')" id="tabGroups" class="segment-tab flex-1 py-2.5 px-3 rounded-xl text-center flex items-center justify-center gap-1.5 cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-red-500">
+                <span>👥</span><span class="truncate">Groups</span>
+            </button>
+            <button onclick="openCloudStatusModal()" id="tabCloud" class="segment-tab flex-1 py-2.5 px-3 rounded-xl text-center flex items-center justify-center gap-1.5 cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-red-500">
+                <span>☁️</span><span class="truncate">Cloud</span>
+            </button>
+            <button onclick="switchNavTab('about')" id="tabAbout" class="segment-tab flex-1 py-2.5 px-3 rounded-xl text-center flex items-center justify-center gap-1.5 cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-red-500">
+                <span>💻</span><span class="truncate">About</span>
+            </button>
+            <button onclick="switchNavTab('admin')" id="tabAdmin" class="segment-tab flex-1 py-2.5 px-3 rounded-xl text-center flex items-center justify-center gap-1.5 cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-red-500">
+                <span>🔐</span><span class="truncate">Admin</span>
+            </button>
+            <button onclick="toggleTheme()" id="squareThemeBtn" class="segment-tab py-2.5 px-3 rounded-xl text-center flex items-center justify-center gap-1.5 cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-red-500" title="Theme Toggle">
+                <span id="themeIcon">🌙</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Dashboard View -->
+    <main id="mainDashboardView" class="max-w-7xl mx-auto px-4 pt-4 space-y-5 w-full">
+        <section class="relative rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 glass-panel p-5 text-white bg-gradient-to-r from-slate-950 via-purple-950 to-slate-900">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div>
+                    <span class="px-2.5 py-0.5 rounded-full bg-red-500/20 border border-red-400/40 text-red-300 text-[10px] font-bold">Secure Cloud Vault & Spatial Audio</span>
+                    <h2 class="text-xl sm:text-2xl font-black mt-1">Lande Family Hub & Music Hub</h2>
+                    <p class="text-[11px] text-slate-300 mt-0.5">Sabki Apni Jagah Sabka Apna Sangeet</p>
+                </div>
+                <button onclick="handleProfileClick(event, 0)" class="px-4 py-2 glow-btn text-white font-extrabold rounded-2xl text-xs shadow-lg cursor-pointer hover:scale-105 transition-transform shrink-0">
+                    Explore Hub
+                </button>
+            </div>
+        </section>
+
+        <!-- Profiles Section -->
+        <section class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-black">Family Profiles & Spatial Hub</h2>
+                <button class="admin-only hidden px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white font-extrabold rounded-xl text-xs cursor-pointer shadow relative z-20" onclick="openAddMemberModal()">
+                    + Add Profile
+                </button>
+            </div>
+            <div id="membersGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        </section>
+    </main>
+
+    <!-- About Developer & Music Hub View -->
+    <main id="aboutPageMainView" class="hidden max-w-7xl mx-auto px-4 pt-4 space-y-5 w-full">
+        <div class="glass-panel rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+            <div class="flex items-center justify-between border-b pb-4">
+                <h2 class="text-xl font-black text-red-600">🎵 About Me & My Music Hub</h2>
+                <button onclick="switchNavTab('home')" class="px-3 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-xl text-xs font-bold">← Back</button>
+            </div>
+            <div class="space-y-4 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                <p>Welcome to my personal music space! I created this website because I wanted a simple, lightweight way to enjoy all my favorite tracks in one place without clogging up my device's storage.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Admin Panel Full Page View -->
+    <main id="adminPageMainView" class="hidden max-w-7xl mx-auto px-4 pt-4 space-y-5 w-full">
+        <div class="p-4 bg-gradient-to-r from-red-500/20 via-purple-500/20 to-red-500/20 border border-red-500/50 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-red-900 dark:text-red-200 shadow-lg">
+            <div>
+                <span class="font-extrabold text-red-600 dark:text-red-400 text-sm uppercase">ADMIN MODE ACTIVE</span>
+                <p class="text-[10px] font-bold mt-0.5">Control Panel Ready</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="openAdminNotificationModal()" class="p-2.5 bg-amber-600 text-white font-extrabold rounded-xl text-xs cursor-pointer">🔔</button>
+                <button onclick="exportPortalData()" class="p-2.5 bg-indigo-600 text-white font-extrabold rounded-xl text-xs cursor-pointer">📥</button>
+                <button onclick="triggerImportPortalData()" class="p-2.5 bg-blue-600 text-white font-extrabold rounded-xl text-xs cursor-pointer">📤</button>
+                <button onclick="window.saveDataToFirestore()" class="p-2.5 bg-emerald-600 text-white font-black rounded-xl text-xs cursor-pointer">☁️</button>
+                <button onclick="triggerLogoUpload()" class="p-2.5 bg-red-600 text-white font-extrabold rounded-xl text-xs cursor-pointer">🎵</button>
+            </div>
+        </div>
+
+        <div class="glass-panel rounded-3xl p-6 shadow-2xl relative space-y-6">
+            <div id="adminLoginContainer" class="max-w-md mx-auto py-8 text-center space-y-4">
+                <div class="w-16 h-16 rounded-3xl bg-red-500/20 text-red-500 flex items-center justify-center mx-auto text-2xl font-black">🔐</div>
+                <h4 class="font-extrabold text-lg">Master Authentication Required</h4>
+                <form onsubmit="verifyAdminPassword(event)" class="space-y-3 text-left pt-2">
+                    <input type="password" id="adminPassInput" placeholder="Enter Admin Password" required class="w-full p-3 bg-white dark:bg-slate-800 rounded-2xl border text-xs font-mono">
+                    <button type="submit" class="w-full py-3 glow-btn text-white font-extrabold rounded-2xl text-xs cursor-pointer shadow">Login Admin Panel</button>
+                </form>
+            </div>
+
+            <div id="adminDashboardContainer" class="hidden space-y-6">
+                <div class="flex items-center justify-between border-b pb-3">
+                    <h3 class="font-black text-sm text-red-600 uppercase">Admin Dashboard Management</h3>
+                    <button onclick="logoutAdmin()" class="px-3 py-1.5 bg-red-600 text-white font-bold rounded-xl text-xs">Logout</button>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-extrabold text-sm">Manage Profiles & Playlists</h4>
+                        <button onclick="openAddMemberModal()" class="px-3.5 py-1.5 bg-red-600 text-white font-bold rounded-xl text-xs shadow">+ Add Profile</button>
+                    </div>
+                    <div id="adminProfilesCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Profile Hub View -->
+    <main id="profileHubPageView" class="hidden max-w-7xl mx-auto px-4 pt-4 space-y-5 w-full">
+        <div class="spatial-glass rounded-3xl p-6 sm:p-8 text-white relative space-y-6 shadow-2xl w-full bg-[#0b0f19] border border-white/10">
+            <!-- Top Action Bar -->
+            <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                <button onclick="backToDashboard()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition shadow">← Back to Dashboard</button>
+                <div class="flex gap-2">
+                    <button class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-bold shadow" onclick="openEditProfileModal()">Edit Details</button>
+                    <button class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow" onclick="deleteCurrentMember()">Delete Profile</button>
+                </div>
+            </div>
+
+            <!-- Profile Info Header -->
+            <div class="flex items-center space-x-4">
+                <div id="hubAvatarBox" class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-red-600 to-pink-600 flex items-center justify-center text-white font-black text-xl shadow-lg">SL</div>
+                <div>
+                    <h3 id="hubName" class="font-black text-2xl tracking-wide">Sarthak Kamlesh Lande</h3>
+                    <p id="hubPhone" class="text-xs text-slate-300 mt-0.5">+91 9673465849</p>
+                </div>
+            </div>
+
+            <!-- 2-Column Music Hub Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pt-2">
+                
+                <!-- LEFT COLUMN: Music Player Top + Dynamic Songs List Bottom -->
+                <div class="lg:col-span-8 space-y-6">
+                    <!-- Functional Music Player Banner -->
+                    <div class="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-white/10 relative overflow-hidden shadow-2xl space-y-6">
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
+                            <div class="space-y-1 text-center sm:text-left">
+                                <span class="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-[10px] font-extrabold uppercase tracking-widest border border-emerald-500/30">Following</span>
+                                <h3 id="bannerSongTitle" class="text-2xl sm:text-3xl font-black mt-1">Lovely</h3>
+                                <p id="bannerArtistName" class="text-xs text-slate-300 font-medium">by Billie Eilish</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button onclick="skipTrack(-1)" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center shadow cursor-pointer text-white">⏮</button>
+                                <button id="bannerPlayPauseBtn" onclick="togglePlayPause()" class="w-12 h-12 rounded-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 flex items-center justify-center shadow-lg font-black text-lg cursor-pointer">▶</button>
+                                <button onclick="skipTrack(1)" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center shadow cursor-pointer text-white">⏭</button>
+                            </div>
+                        </div>
+
+                        <!-- Scrubber & Audio Element -->
+                        <div class="space-y-1.5 relative z-10">
+                            <audio id="customAudioElement" ontimeupdate="updateAudioProgress()"></audio>
+                            <input type="range" id="audioSeekbar" value="0" max="100" step="0.1" onchange="seekAudio(this.value)" class="w-full accent-emerald-500 cursor-pointer h-1.5 bg-slate-700/80 rounded-lg">
+                        </div>
+                    </div>
+
+                    <!-- What's Hot 🔥 Trending Now -->
+                    <div class="p-5 rounded-3xl bg-[#131b2e] border border-white/10 space-y-4 shadow-xl">
+                        <div class="flex justify-between items-center">
+                            <span id="selectedPlaylistHeading" class="text-xs font-black uppercase tracking-wider text-red-400">WHAT'S HOT 🔥 TRENDING NOW</span>
+                            <span class="text-[11px] text-slate-400">Select playlist on right</span>
+                        </div>
+                        <div id="playlistSongsListView" class="space-y-2"></div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: Playlists Cards Only -->
+                <div class="lg:col-span-4 p-5 rounded-3xl bg-[#131b2e] border border-white/10 space-y-5 shadow-xl">
+                    <div class="flex justify-between items-center border-b border-white/10 pb-3">
+                        <h4 class="font-black text-sm text-red-400">Liked Songs / Playlists</h4>
+                        <span class="text-[10px] text-slate-400">Click to Select</span>
+                    </div>
+
+                    <div id="playlistsOnlyContainer" class="space-y-3 max-h-[420px] overflow-y-auto pr-1"></div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Admin Profile Popout Modal -->
+    <main id="adminProfilePopoutModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-xl w-full shadow-2xl relative z-50 max-h-[90vh] overflow-y-auto space-y-4">
+            <button onclick="closeModal('adminProfilePopoutModal')" class="absolute top-4 right-4 text-slate-400 font-bold">✕</button>
+            <h3 id="popoutProfileTitle" class="font-extrabold text-base text-red-600">Manage Profile & Playlists</h3>
+            
+            <div class="space-y-4 text-xs">
+                <div class="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl space-y-3">
+                    <h4 class="font-bold text-slate-900 dark:text-white">Edit Profile Info & Photo</h4>
+                    <input type="text" id="popoutEditName" placeholder="Full Name" class="w-full p-2.5 bg-white dark:bg-slate-900 rounded-xl border">
+                    <input type="text" id="popoutEditPhone" placeholder="Phone Number" class="w-full p-2.5 bg-white dark:bg-slate-900 rounded-xl border">
+                    <button onclick="savePopoutProfileChanges()" class="px-4 py-2 bg-amber-500 text-slate-950 font-bold rounded-xl shadow">Update Profile Info</button>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <h4 class="font-bold text-red-500">Playlists & Songs Manager</h4>
+                        <button onclick="adminAddNewPlaylistInPopout()" class="px-3 py-1.5 bg-red-600 text-white font-bold rounded-xl text-[10px]">+ Create Playlist</button>
+                    </div>
+                    <div id="popoutPlaylistsList" class="space-y-3"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <div id="groupsPopoutModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-sm w-full shadow-2xl relative z-50 text-center space-y-4">
+            <button onclick="closeModal('groupsPopoutModal')" class="absolute top-4 right-4 text-slate-400 font-bold">✕</button>
+            <h3 class="font-extrabold text-base text-blue-600">Family Groups Feature</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-300">Yeh feature abhi development mein hai. Jald aayega!</p>
+            <button onclick="closeModal('groupsPopoutModal')" class="w-full py-2.5 bg-blue-600 text-white rounded-xl text-xs">Got it</button>
+        </div>
+    </div>
+
+    <!-- Hidden Inputs -->
+    <input type="file" id="logoFileInput" accept="image/*" class="hidden" onchange="handleLogoUpload(event)">
+    <div id="toast" class="fixed top-20 right-1/2 translate-x-1/2 bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-full shadow-2xl opacity-0 transition duration-300 pointer-events-none z-50"></div>
+
+    <!-- Core Script -->
+    <script>
+        window.familyMembers = JSON.parse(localStorage.getItem('lande_members_data')) || [
+            { name: "Sarthak Kamlesh Lande", occupation: "Student", phone: "+91 9673465849", passKey: "@Sarthak2009", hidden: false, playlists: [
+                { title: "Liked Songs", songs: [
+                    { name: "Shri Swami Samarth", artist: "Sarthak Kamlesh Lande", link: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
+                    { name: "Lovely", artist: "Billie Eilish", link: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" }
+                ]}
+            ]}
+        ];
+        window.customCrestLogo = localStorage.getItem('lande_crest_logo') || "";
+        window.isAdminLoggedIn = false;
+        window.unlockedMemberIndex = null;
+        window.adminSelectedProfileIndex = null;
+        window.currentSelectedPlaylistIndex = 0;
+        window.currentPlayingSongIndex = 0;
+        window.currentSongsList = [];
+
+        function saveToLocalCache() {
+            localStorage.setItem('lande_members_data', JSON.stringify(window.familyMembers));
+            localStorage.setItem('lande_crest_logo', window.customCrestLogo);
+        }
+
+        function getInitials(name) {
+            const parts = String(name).trim().split(/\s+/);
+            if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+
+        function createAvatarSVG(initials) {
+            return `<div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-red-600 to-pink-600 flex items-center justify-center text-white font-black text-xl shadow-lg">${initials}</div>`;
+        }
+
+        function switchNavTab(tabName) {
+            document.querySelectorAll('.segment-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('mainDashboardView').classList.add('hidden');
+            document.getElementById('aboutPageMainView').classList.add('hidden');
+            document.getElementById('adminPageMainView').classList.add('hidden');
+            document.getElementById('profileHubPageView').classList.add('hidden');
+
+            if (tabName === 'home') {
+                document.getElementById('tabHome').classList.add('active');
+                document.getElementById('mainDashboardView').classList.remove('hidden');
+            } else if (tabName === 'groups') {
+                document.getElementById('tabGroups').classList.add('active');
+                document.getElementById('mainDashboardView').classList.remove('hidden');
+                openModal('groupsPopoutModal');
+            } else if (tabName === 'about') {
+                document.getElementById('tabAbout').classList.add('active');
+                document.getElementById('aboutPageMainView').classList.remove('hidden');
+            } else if (tabName === 'admin') {
+                document.getElementById('tabAdmin').classList.add('active');
+                document.getElementById('adminPageMainView').classList.remove('hidden');
+                checkAdminLoginState();
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderMembersGrid() {
+            const grid = document.getElementById('membersGrid');
+            if (!grid) return;
+            grid.innerHTML = window.familyMembers.map((m, idx) => `
+                <div class="glass-panel rounded-3xl p-5 text-center flex flex-col items-center shadow-sm hover:shadow-lg cursor-pointer transition-all relative" onclick="handleProfileClick(event, ${idx})">
+                    <div class="mb-3">${createAvatarSVG(getInitials(m.name))}</div>
+                    <h3 class="font-extrabold text-sm">${m.name}</h3>
+                    <p class="text-[11px] text-slate-500 mt-0.5">${m.occupation || 'Member'}</p>
+                    <button class="mt-4 px-3.5 py-1.5 bg-red-600 text-white rounded-xl text-xs font-bold shadow">Open Hub</button>
+                </div>
+            `).join('');
+        }
+
+        function renderAdminProfileCards() {
+            const container = document.getElementById('adminProfilesCardsGrid');
+            if (!container) return;
+            container.innerHTML = window.familyMembers.map((m, mIdx) => `
+                <div class="glass-panel rounded-3xl p-4 text-center flex flex-col items-center shadow-md relative bg-white/80 dark:bg-slate-800 space-y-2">
+                    <div class="mb-1">${createAvatarSVG(getInitials(m.name))}</div>
+                    <h4 class="font-bold text-sm">${m.name}</h4>
+                    <p class="text-[10px] text-slate-400">${m.phone || '+91 9673465849'}</p>
+                    <div class="flex gap-2 pt-2">
+                        <button onclick="openAdminProfilePopout(${mIdx})" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs shadow">Manage</button>
+                        <button onclick="adminDeleteProfile(${mIdx})" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs shadow">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openAdminProfilePopout(mIdx) {
+            window.adminSelectedProfileIndex = mIdx;
+            const m = window.familyMembers[mIdx];
+            document.getElementById('popoutProfileTitle').innerText = `Manage: ${m.name}`;
+            document.getElementById('popoutEditName').value = m.name;
+            document.getElementById('popoutEditPhone').value = m.phone || "";
+            renderPopoutPlaylists(m);
+            openModal('adminProfilePopoutModal');
+        }
+
+        function savePopoutProfileChanges() {
+            if (window.adminSelectedProfileIndex === null) return;
+            const m = window.familyMembers[window.adminSelectedProfileIndex];
+            m.name = document.getElementById('popoutEditName').value.trim() || m.name;
+            m.phone = document.getElementById('popoutEditPhone').value.trim();
+            saveToLocalCache();
+            renderAdminProfileCards();
+            renderMembersGrid();
+            showToast("Profile info updated!");
+        }
+
+        function renderPopoutPlaylists(m) {
+            const container = document.getElementById('popoutPlaylistsList');
+            if (!container) return;
+            if (!m.playlists || m.playlists.length === 0) {
+                container.innerHTML = '<p class="text-[11px] text-slate-400 italic">No playlists found.</p>';
+                return;
+            }
+
+            container.innerHTML = m.playlists.map((pl, pIdx) => `
+                <div class="p-3 bg-slate-900/90 rounded-2xl border border-white/10 space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="font-extrabold text-xs text-red-400">📂 ${pl.title}</span>
+                        <div class="flex gap-1 flex-wrap">
+                            <button onclick="adminRenamePlaylist(${pIdx})" class="px-2 py-0.5 bg-amber-500 text-slate-950 rounded font-bold text-[9px]">Rename</button>
+                            <button onclick="adminDeletePlaylist(${pIdx})" class="px-2 py-0.5 bg-red-600 text-white rounded font-bold text-[9px]">Delete</button>
+                            <button onclick="adminAddSongToPlaylist(${pIdx})" class="px-2 py-0.5 bg-emerald-600 text-white rounded font-bold text-[9px]">+ Song</button>
+                        </div>
+                    </div>
+                    <div class="space-y-1 pl-2">
+                        ${pl.songs && pl.songs.length > 0 ? pl.songs.map((s, sIdx) => `
+                            <div class="flex justify-between items-center bg-black/40 p-1.5 rounded-lg text-xs">
+                                <span>🎵 ${s.name}</span>
+                                <button onclick="adminDeleteSong(${pIdx}, ${sIdx})" class="px-1.5 py-0.5 bg-red-600 text-white rounded text-[8px]">Delete</button>
+                            </div>
+                        `).join('') : '<p class="text-[10px] text-slate-500 italic">No songs.</p>'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function adminAddNewPlaylistInPopout() {
+            const title = prompt("Enter Playlist Name:");
+            if (!title) return;
+            const m = window.familyMembers[window.adminSelectedProfileIndex];
+            if (!m.playlists) m.playlists = [];
+            m.playlists.push({ title, songs: [] });
+            saveToLocalCache();
+            renderPopoutPlaylists(m);
+            showToast("Playlist created!");
+        }
+
+        function adminRenamePlaylist(pIdx) {
+            const m = window.familyMembers[window.adminSelectedProfileIndex];
+            const newTitle = prompt("Enter new playlist name:", m.playlists[pIdx].title);
+            if (!newTitle) return;
+            m.playlists[pIdx].title = newTitle;
+            saveToLocalCache();
+            renderPopoutPlaylists(m);
+            showToast("Playlist renamed!");
+        }
+
+        function adminDeletePlaylist(pIdx) {
+            if (confirm("Delete this playlist?")) {
+                const m = window.familyMembers[window.adminSelectedProfileIndex];
+                m.playlists.splice(pIdx, 1);
+                saveToLocalCache();
+                renderPopoutPlaylists(m);
+                showToast("Playlist deleted!");
+            }
+        }
+
+        function adminAddSongToPlaylist(pIdx) {
+            const link = prompt("Paste Direct Audio Stream URL (MP3):");
+            if (!link) return;
+            const songName = prompt("Enter Song Title:", "Track");
+            const m = window.familyMembers[window.adminSelectedProfileIndex];
+            m.playlists[pIdx].songs.push({ name: songName || "Track", artist: m.name, link });
+            saveToLocalCache();
+            renderPopoutPlaylists(m);
+            showToast("Song added!");
+        }
+
+        function adminDeleteSong(pIdx, sIdx) {
+            if (confirm("Delete this song?")) {
+                const m = window.familyMembers[window.adminSelectedProfileIndex];
+                m.playlists[pIdx].songs.splice(sIdx, 1);
+                saveToLocalCache();
+                renderPopoutPlaylists(m);
+                showToast("Song deleted!");
+            }
+        }
+
+        function adminDeleteProfile(mIdx) {
+            if (confirm("Delete this profile?")) {
+                window.familyMembers.splice(mIdx, 1);
+                saveToLocalCache();
+                renderAdminProfileCards();
+                renderMembersGrid();
+                showToast("Profile deleted!");
+            }
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // Pure HTML5 Audio Player Handler (No YouTube Embed Error 153)
+        function playSpatialTrack(songName, artistName, songLink, songIdx = 0, songsList = []) {
+            document.getElementById('bannerSongTitle').innerText = songName;
+            document.getElementById('bannerArtistName').innerText = `by ${artistName || 'Lande Music'}`;
+            
+            window.currentPlayingSongIndex = songIdx;
+            if (songsList.length > 0) window.currentSongsList = songsList;
+
+            const audio = document.getElementById('customAudioElement');
+            audio.src = songLink;
+            audio.play().then(() => {
+                document.getElementById('bannerPlayPauseBtn').innerText = "⏸";
+            }).catch(e => {
+                console.log("Audio play prevented:", e);
+                showToast("Audio stream playback failed. Please use valid MP3 URL.");
+            });
+            showToast(`Now Playing: ${songName}`);
+        }
+
+        function togglePlayPause() {
+            const audio = document.getElementById('customAudioElement');
+            const btn = document.getElementById('bannerPlayPauseBtn');
+            if (audio.paused) {
+                audio.play().then(() => btn.innerText = "⏸").catch(e => {});
+            } else {
+                audio.pause();
+                btn.innerText = "▶";
+            }
+        }
+
+        function updateAudioProgress() {
+            const audio = document.getElementById('customAudioElement');
+            const seekbar = document.getElementById('audioSeekbar');
+            if (!audio.duration) return;
+            seekbar.value = (audio.currentTime / audio.duration) * 100;
+            if (audio.ended) skipTrack(1);
+        }
+
+        function seekAudio(val) {
+            const audio = document.getElementById('customAudioElement');
+            if (!audio.duration) return;
+            audio.currentTime = (val / 100) * audio.duration;
+        }
+
+        function skipTrack(dir) {
+            if (!window.currentSongsList || window.currentSongsList.length === 0) return;
+            window.currentPlayingSongIndex = (window.currentPlayingSongIndex + dir + window.currentSongsList.length) % window.currentSongsList.length;
+            const next = window.currentSongsList[window.currentPlayingSongIndex];
+            playSpatialTrack(next.name, next.artist, next.link, window.currentPlayingSongIndex, window.currentSongsList);
+        }
+
+        function selectPlaylistAndLoadSongs(pIdx) {
+            window.currentSelectedPlaylistIndex = pIdx;
+            const member = window.familyMembers[window.unlockedMemberIndex];
+            renderHubMusicLayout(member);
+        }
+
+        function renderHubMusicLayout(member) {
+            const plContainer = document.getElementById('playlistsOnlyContainer');
+            if (!member.playlists || member.playlists.length === 0) {
+                plContainer.innerHTML = '<p class="text-xs text-slate-400 italic">No playlists yet.</p>';
+            } else {
+                plContainer.innerHTML = member.playlists.map((pl, pIdx) => {
+                    const isActive = pIdx === window.currentSelectedPlaylistIndex;
+                    return `
+                    <div onclick="selectPlaylistAndLoadSongs(${pIdx})" class="flex items-center justify-between p-3.5 rounded-2xl bg-black/40 border border-white/5 text-xs hover:bg-black/60 transition cursor-pointer shadow ${isActive ? 'playlist-card-active' : ''}">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-red-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold shadow">📁</div>
+                            <div>
+                                <h6 class="font-bold text-white text-sm">${pl.title}</h6>
+                                <p class="text-[10px] text-slate-400">${pl.songs?.length || 0} Songs</p>
+                            </div>
+                        </div>
+                        <span class="text-slate-400 text-xs">➡️</span>
+                    </div>
+                `;}).join('');
+            }
+
+            const selectedPl = member.playlists[window.currentSelectedPlaylistIndex] || member.playlists[0];
+            const headingEl = document.getElementById('selectedPlaylistHeading');
+            const songsContainer = document.getElementById('playlistSongsListView');
+
+            if (selectedPl) {
+                headingEl.innerText = `${selectedPl.title.toUpperCase()} SONGS`;
+                if (!selectedPl.songs || selectedPl.songs.length === 0) {
+                    songsContainer.innerHTML = '<p class="text-xs text-slate-400 italic">No songs in this playlist.</p>';
+                } else {
+                    window.currentSongsList = selectedPl.songs;
+                    songsContainer.innerHTML = selectedPl.songs.map((s, idx) => `
+                        <div class="flex items-center justify-between p-3 rounded-2xl bg-black/30 border border-white/5 text-xs hover:bg-black/50 transition">
+                            <div class="flex items-center gap-3">
+                                <span class="text-slate-400 font-mono text-[11px]">${idx + 1}</span>
+                                <div>
+                                    <h5 class="font-bold text-white">${s.name}</h5>
+                                    <p class="text-[10px] text-slate-400">${s.artist || member.name}</p>
+                                </div>
+                            </div>
+                            <button onclick="playSpatialTrack('${s.name}', '${s.artist || member.name}', '${s.link}', ${idx}, ${JSON.stringify(selectedPl.songs).replace(/"/g, '&quot;')})" class="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded-xl text-[10px] shadow cursor-pointer">Play</button>
+                        </div>
+                    `).join('');
+                }
+
+                if (selectedPl.songs?.[0]) {
+                    const first = selectedPl.songs[0];
+                    document.getElementById('bannerSongTitle').innerText = first.name;
+                    document.getElementById('bannerArtistName').innerText = `by ${first.artist || member.name}`;
+                }
+            }
+        }
+
+        function handleProfileClick(e, index) {
+            if (e) e.stopPropagation();
+            window.unlockedMemberIndex = index;
+            window.currentSelectedPlaylistIndex = 0;
+            const member = window.familyMembers[index];
+            document.getElementById('hubName').innerText = member.name;
+            document.getElementById('hubPhone').innerText = member.phone || "+91 9673465849";
+            document.getElementById('hubAvatarBox').innerHTML = getInitials(member.name);
+
+            renderHubMusicLayout(member);
+
+            document.getElementById('mainDashboardView').classList.add('hidden');
+            document.getElementById('profileHubPageView').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function backToDashboard() {
+            document.getElementById('profileHubPageView').classList.add('hidden');
+            document.getElementById('mainDashboardView').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function checkAdminLoginState() {
+            const loginBox = document.getElementById('adminLoginContainer');
+            const dashBox = document.getElementById('adminDashboardContainer');
+            if (window.isAdminLoggedIn) {
+                loginBox.classList.add('hidden');
+                dashBox.classList.remove('hidden');
+                renderAdminProfileCards();
+            } else {
+                loginBox.classList.add('hidden'); // wait
+                loginBox.classList.remove('hidden');
+                dashBox.classList.add('hidden');
+            }
+        }
+
+        function verifyAdminPassword(e) {
+            e.preventDefault();
+            const val = document.getElementById('adminPassInput').value.trim();
+            if (val === "@Sarthak2009" || val === "ADMIN2009") {
+                window.isAdminLoggedIn = true;
+                checkAdminLoginState();
+                showToast("Admin Logged In!");
+            } else {
+                alert("Incorrect Password");
+            }
+        }
+
+        function logoutAdmin() {
+            window.isAdminLoggedIn = false;
+            checkAdminLoginState();
+            showToast("Logged Out");
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.classList.add('opacity-100'); t.classList.remove('opacity-0');
+            setTimeout(() => { t.classList.remove('opacity-100'); t.classList.add('opacity-0'); }, 2000);
+        }
+
+        window.onload = function() {
+            renderMembersGrid();
+        };
+    </script>
+</body>
+</html>
