@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lande Family Portal & VIKSIT Vault</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        viksitDark: '#0b071e',
+                        viksitRed: '#e11d48',
+                        viksitPurple: '#7c3aed',
+                        viksitNeon: '#a855f7',
+                        viksitGold: '#fbbf24'
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; width: 100vw; max-width: 100%; transition: background-color 0.3s ease, color 0.3s ease; }
+        .glass-panel { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 8px 32px 0 rgba(225, 29, 72, 0.1); }
+        .dark .glass-panel { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); }
+        .glass-modal { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(20px); }
+        .dark .glass-modal { background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(20px); }
+        .glow-btn { background: linear-gradient(135deg, #e11d48 0%, #7c3aed 100%); box-shadow: 0 4px 20px rgba(225, 29, 72, 0.4); }
+        .viksit-card { background: linear-gradient(135deg, #110c2e 0%, #3b146b 50%, #110c2e 100%); border: 1px solid rgba(225, 29, 72, 0.3); }
+        .menu-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .menu-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px -5px rgba(225, 29, 72, 0.3); }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 min-h-screen pb-20 relative w-full overflow-x-hidden">
+
+    <!-- Header / Navbar with Music Gradient Logo -->
+    <header class="sticky top-0 z-40 w-full backdrop-blur-xl bg-white/80 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-300">
+        <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between w-full">
+            <div class="flex items-center space-x-3 cursor-pointer select-none" onclick="triggerLogoUpload()" title="App Logo Badlein">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#e11d48] via-[#7c3aed] to-[#3b82f6] flex items-center justify-center text-white shadow-lg relative group shrink-0">
+                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                    <div class="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center text-[10px] text-white font-bold rounded-2xl">Edit</div>
+                </div>
+                <div>
+                    <h1 class="font-black text-base sm:text-lg bg-gradient-to-r from-[#e11d48] via-[#7c3aed] to-[#3b82f6] bg-clip-text text-transparent leading-tight">
+                        Lande Family Portal
+                    </h1>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold tracking-wide">Sabka Apna Sangeet</p>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex items-center space-x-2 shrink-0">
+                <button onclick="openCloudStatusModal()" class="px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer hover:bg-emerald-500/20 transition" title="Check Cloud Sync Status">
+                    <span id="syncIndicator" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="hidden sm:inline">Check Cloud</span>
+                </button>
+
+                <button onclick="openNotificationsModal()" class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 flex items-center justify-center cursor-pointer relative z-20 text-sm shadow-sm hover:scale-105 transition-transform" title="Notifications">
+                    🔔 <span id="notifBadge" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full"></span>
+                </button>
+
+                <!-- Modern Theme Toggle Switch -->
+                <button onclick="toggleTheme()" id="squareThemeBtn" class="w-9 h-9 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center cursor-pointer relative z-20 shadow-sm transition-transform hover:scale-105" title="Theme Badlein">
+                    <span id="themeIcon" class="text-sm">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard View -->
+    <main id="mainDashboardView" class="max-w-4xl mx-auto px-4 pt-6 space-y-6 w-full">
+
+        <!-- Admin Notice Bar -->
+        <div id="adminNoticeBar" class="hidden p-3 bg-gradient-to-r from-red-500/20 via-purple-500/20 to-red-500/20 border border-red-500/50 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-red-900 dark:text-red-200 shadow-lg relative z-30">
+            <div>
+                <span class="font-extrabold text-red-600 dark:text-red-400 text-sm">ADMIN MODE ACTIVE</span>
+                <p class="text-[10px] font-bold mt-0.5">Control Panel Ready</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="openAdminNotificationModal()" class="p-2.5 bg-amber-600 hover:bg-amber-700 text-white font-extrabold rounded-xl text-xs cursor-pointer shadow flex items-center justify-center" title="Notification Bhejein">🔔</button>
+                <button onclick="exportPortalData()" class="p-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl text-xs cursor-pointer shadow flex items-center justify-center" title="Backup Export">📥</button>
+                <button onclick="triggerImportPortalData()" class="p-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs cursor-pointer shadow flex items-center justify-center" title="Backup Import">📤</button>
+                <button onclick="window.saveDataToFirestore()" class="p-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs flex items-center justify-center shadow-lg cursor-pointer" title="Publish Cloud">☁️</button>
+                <button onclick="logoutAdmin()" class="p-2.5 bg-red-600 hover:bg-red-700 text-white font-extrabold rounded-xl text-xs cursor-pointer flex items-center justify-center" title="Logout">🚪</button>
+            </div>
+        </div>
+
+        <!-- Hero Banner -->
+        <section class="relative rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 glass-panel p-6 text-white bg-gradient-to-r from-slate-950 via-purple-950 to-slate-900">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                    <span class="px-3 py-1 rounded-full bg-red-500/20 border border-red-400/40 text-red-300 text-xs font-bold">Secure Cloud Vault & VIKSIT</span>
+                    <h2 class="text-2xl font-black mt-2">Lande Family Hub & VIKSIT</h2>
+                    <p class="text-xs text-slate-300 mt-1">Manage profiles, custom folders, statements, and secure app viewer.</p>
+                </div>
+                <button onclick="handleProfileClick(event, 0)" class="px-5 py-2.5 glow-btn text-white font-extrabold rounded-2xl text-xs shadow-lg cursor-pointer hover:scale-105 transition-transform shrink-0">
+                    Explore Hub
+                </button>
+            </div>
+        </section>
+
+        <!-- Single-Row Quick Navigation Menu -->
+        <section class="space-y-3">
+            <div class="flex items-center justify-between px-1">
+                <h3 class="text-xs font-black uppercase tracking-wider text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                    <span>⚡ Quick Navigation Menu</span>
+                </h3>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 border border-red-500/20">Active Portal</span>
+            </div>
+            
+            <div class="grid grid-cols-5 gap-2 sm:gap-3 overflow-x-auto pb-1">
+                <!-- Home Menu -->
+                <button onclick="switchNavTab('home')" class="menu-card glass-panel rounded-2xl p-3 sm:p-4 text-center flex flex-col items-center justify-center gap-1.5 cursor-pointer border border-red-500/30 bg-gradient-to-b from-red-500/10 to-transparent min-w-[70px]">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-red-600 text-white flex items-center justify-center text-sm sm:text-lg shadow-md">🏠</div>
+                    <div>
+                        <h4 class="font-extrabold text-[11px] sm:text-xs text-slate-900 dark:text-white truncate">Home</h4>
+                        <p class="text-[8px] sm:text-[9px] text-emerald-500 font-bold mt-0.5">● Active</p>
+                    </div>
+                </button>
+
+                <!-- Family Groups Menu -->
+                <button onclick="switchNavTab('groups')" class="menu-card glass-panel rounded-2xl p-3 sm:p-4 text-center flex flex-col items-center justify-center gap-1.5 cursor-pointer border border-blue-500/30 bg-gradient-to-b from-blue-500/10 to-transparent min-w-[70px]">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm sm:text-lg shadow-md">👨‍👩‍👧‍👦</div>
+                    <div>
+                        <h4 class="font-extrabold text-[11px] sm:text-xs text-slate-900 dark:text-white truncate">Groups</h4>
+                        <p class="text-[8px] sm:text-[9px] text-blue-400 font-bold mt-0.5">Soon</p>
+                    </div>
+                </button>
+
+                <!-- Check Cloud Menu -->
+                <button onclick="openCloudStatusModal()" class="menu-card glass-panel rounded-2xl p-3 sm:p-4 text-center flex flex-col items-center justify-center gap-1.5 cursor-pointer border border-emerald-500/30 bg-gradient-to-b from-emerald-500/10 to-transparent min-w-[70px]">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-sm sm:text-lg shadow-md">☁️</div>
+                    <div>
+                        <h4 class="font-extrabold text-[11px] sm:text-xs text-slate-900 dark:text-white truncate">Cloud</h4>
+                        <p id="menuCloudStatusText" class="text-[8px] sm:text-[9px] text-emerald-500 font-bold mt-0.5">● Synced</p>
+                    </div>
+                </button>
+
+                <!-- About Developer Menu -->
+                <button onclick="switchNavTab('about')" class="menu-card glass-panel rounded-2xl p-3 sm:p-4 text-center flex flex-col items-center justify-center gap-1.5 cursor-pointer border border-amber-500/30 bg-gradient-to-b from-amber-500/10 to-transparent min-w-[70px]">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center text-sm sm:text-lg shadow-md">💻</div>
+                    <div>
+                        <h4 class="font-extrabold text-[11px] sm:text-xs text-slate-900 dark:text-white truncate">About</h4>
+                        <p class="text-[8px] sm:text-[9px] text-amber-500 font-bold mt-0.5">Sarthak</p>
+                    </div>
+                </button>
+
+                <!-- Admin Panel Menu -->
+                <button onclick="toggleAdminLoginModal()" class="menu-card glass-panel rounded-2xl p-3 sm:p-4 text-center flex flex-col items-center justify-center gap-1.5 cursor-pointer border border-red-600/40 bg-gradient-to-b from-red-700/20 to-transparent min-w-[70px]">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-red-700 to-purple-600 text-white flex items-center justify-center text-sm sm:text-lg shadow-md">🔐</div>
+                    <div>
+                        <h4 class="font-extrabold text-[11px] sm:text-xs text-slate-900 dark:text-white truncate">Admin</h4>
+                        <p id="menuAdminStatusText" class="text-[8px] sm:text-[9px] text-red-400 font-bold mt-0.5">Control</p>
+                    </div>
+                </button>
+            </div>
+        </section>
+
+        <!-- Profiles Section -->
+        <section class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-black">Family Profiles</h2>
+                <button class="admin-only hidden px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs cursor-pointer shadow relative z-20" onclick="openAddMemberModal()">
+                    + Add Profile
+                </button>
+            </div>
+            <div id="membersGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        </section>
+
+    </main>
+
+    <!-- Profile Hub View -->
+    <main id="profileHubPageView" class="hidden max-w-4xl mx-auto px-4 pt-6 space-y-6 w-full">
+        <div class="glass-panel rounded-3xl p-6 shadow-2xl relative space-y-6">
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-4">
+                <button onclick="backToDashboard()" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 font-extrabold rounded-xl text-xs flex items-center gap-2 cursor-pointer shadow-sm">
+                    <span>← Back to Dashboard</span>
+                </button>
+                <div class="flex items-center gap-2">
+                    <button class="admin-only hidden px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs cursor-pointer" onclick="openEditProfileModal()">Edit Details</button>
+                    <button class="admin-only hidden px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs cursor-pointer" onclick="deleteCurrentMember()">Delete Profile</button>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <img id="hubPhoto" src="" class="w-20 h-20 rounded-2xl object-cover ring-2 ring-red-500">
+                    <button class="admin-only hidden absolute bottom-0 right-0 bg-red-600 text-white p-1 rounded-full text-[10px] cursor-pointer" onclick="triggerPhotoCropper(unlockedMemberIndex)">📷</button>
+                </div>
+                <div>
+                    <h3 id="hubName" class="font-black text-xl">Name</h3>
+                    <p id="hubPhone" class="text-xs text-slate-500 mt-0.5">Phone</p>
+                </div>
+            </div>
+            
+            <div class="p-4 bg-gradient-to-br from-slate-50 via-red-50/30 to-slate-100 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800 rounded-2xl border border-red-500/30 space-y-2 shadow-inner">
+                <h4 class="text-xs font-black uppercase tracking-wider text-red-600 dark:text-red-400 flex items-center justify-between">
+                    <span>Expanded Profile Summary</span>
+                    <span class="text-[10px] font-mono bg-red-500/20 px-2 py-0.5 rounded text-red-700 dark:text-red-300">Verified ID</span>
+                </h4>
+                <div class="grid grid-cols-2 gap-2 text-xs pt-1">
+                    <p><strong>DOB:</strong> <span id="hubDob">-</span></p>
+                    <p><strong>Gender:</strong> <span id="hubGender">-</span></p>
+                    <p class="col-span-2"><strong>Aadhaar No:</strong> <span id="hubAadhaar" class="font-mono text-red-600">-</span></p>
+                    <p class="col-span-2"><strong>Address:</strong> <span id="hubAddress">-</span></p>
+                    <p class="col-span-2"><strong>Vault PassKey:</strong> <span id="hubPassKey" class="font-mono font-bold text-amber-500">-</span></p>
+                </div>
+            </div>
+
+            <!-- VIKSIT Section -->
+            <div class="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-700">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-xs font-extrabold uppercase tracking-wider text-red-400">VIKSIT Section & Notes</h4>
+                    <button class="admin-only hidden px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-bold cursor-pointer glow-btn" onclick="openAddViksitModal()">+ Add VIKSIT Note/File</button>
+                </div>
+                <div id="viksitLinksContainer" class="space-y-2"></div>
+            </div>
+
+            <!-- Slabs & Statements Section -->
+            <div class="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-700">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-500">Slabs (Folders) & Statements</h4>
+                    <div class="flex gap-2">
+                        <button class="admin-only hidden px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-bold cursor-pointer" onclick="openAddSlabModal()">+ Add Slab</button>
+                        <button class="admin-only hidden px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-[10px] font-bold cursor-pointer" onclick="openAddStatementModal()">+ Add Statement</button>
+                    </div>
+                </div>
+                <div id="slabsAndStatementsContainer" class="space-y-2.5"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Cloud Status Modal -->
+    <div id="cloudStatusModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-sm w-full shadow-2xl relative z-50 text-center space-y-4">
+            <button onclick="closeModal('cloudStatusModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 cursor-pointer">✕</button>
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center mx-auto text-xl font-black">☁️</div>
+            <h3 class="font-extrabold text-base text-red-600">Cloud Vault Connection Status</h3>
+            <p id="cloudStatusDetailText" class="text-xs text-slate-600 dark:text-slate-300">Checking Firebase Cloud Vault connection...</p>
+            <button onclick="closeModal('cloudStatusModal')" class="w-full py-2.5 glow-btn text-white font-extrabold rounded-xl text-xs cursor-pointer">Close</button>
+        </div>
+    </div>
+
+    <!-- Notifications Modal (Updated layout with dark card style & theme colors) -->
+    <div id="notificationsModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-md w-full shadow-2xl relative z-50 max-h-[85vh] overflow-y-auto space-y-4">
+            <button onclick="closeModal('notificationsModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 cursor-pointer font-bold">✕</button>
+            <h3 class="font-extrabold text-base text-red-600 flex items-center gap-2">
+                <span>🔔</span> Broadcasted Notifications
+            </h3>
+            <div id="notificationsListContainer" class="space-y-3 text-xs max-h-96 overflow-y-auto pr-1">
+                <p class="text-slate-400 italic">No new notifications.</p>
+            </div>
+            <button onclick="clearNotifications()" class="w-full py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs cursor-pointer shadow">Clear All</button>
+        </div>
+    </div>
+
+    <!-- Hidden File Inputs -->
+    <input type="file" id="logoFileInput" accept="image/*" class="hidden" onchange="handleLogoUpload(event)">
+    <input type="file" id="photoFileInput" accept="image/*" class="hidden" onchange="handlePhotoUpload(event)">
+    <input type="file" id="slabFileInput" accept="*/*" class="hidden" onchange="handleSlabFileUpload(event)">
+    <input type="file" id="statementFileInput" accept="*/*" class="hidden" onchange="handleStatementFileInput(event)">
+    <input type="file" id="viksitFileInput" accept="*/*" class="hidden" onchange="handleViksitFileInput(event)">
+    <input type="file" id="slabIconInput" accept="image/*" class="hidden" onchange="handleSlabIconUpload(event)">
+    <input type="file" id="statementLogoInput" accept="image/*" class="hidden" onchange="handleStatementLogoUpload(event)">
+    <input type="file" id="importJsonFileInput" accept=".json" class="hidden" onchange="importPortalData(event)">
+
+    <!-- Admin Login Modal -->
+    <div id="adminModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-sm w-full shadow-2xl relative text-center z-50">
+            <button onclick="closeModal('adminModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 cursor-pointer">✕</button>
+            <h3 class="text-base font-extrabold mb-1">Admin Authentication</h3>
+            <p class="text-xs text-slate-500 mb-4">Enter master security password</p>
+            <form onsubmit="verifyAdminPassword(event)" class="space-y-3 text-left">
+                <div class="relative">
+                    <input type="password" id="adminPassInput" placeholder="Enter Admin Password" required class="w-full p-2.5 pr-10 bg-white dark:bg-slate-800 rounded-xl border text-xs font-mono">
+                    <button type="button" onclick="toggleAdminPasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300 cursor-pointer text-sm p-1 z-20 select-none">👁️</button>
+                </div>
+                <div id="adminPassError" class="hidden p-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-[11px] font-bold text-center">
+                    Incorrect Admin Password!
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-extrabold rounded-xl text-xs cursor-pointer shadow">Login Admin</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Password Modal for Vault Unlock -->
+    <div id="passwordModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-sm w-full shadow-2xl relative text-center z-50">
+            <button onclick="closeModal('passwordModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 cursor-pointer">✕</button>
+            <h3 class="text-base font-extrabold mb-1 text-red-600">Unlock Vault</h3>
+            <p class="text-[11px] text-slate-500 mb-3">ACCOUNT HOLDER's PASSWORD</p>
+            <form onsubmit="verifyPassword(event)" class="space-y-3 text-left">
+                <div class="relative">
+                    <input type="password" id="passInput" placeholder="Enter Passkey" required class="w-full p-2.5 pr-10 bg-white dark:bg-slate-800 rounded-xl border text-xs font-mono">
+                    <button type="button" onclick="toggleVaultPasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300 cursor-pointer text-sm p-1 z-20 select-none">👁️</button>
+                </div>
+                <button type="submit" class="w-full py-2.5 glow-btn text-white font-extrabold rounded-xl text-xs cursor-pointer">Unlock</button>
+                <div class="text-center pt-2">
+                    <button type="button" onclick="sendWhatsAppForgotRequest()" class="text-[11px] text-red-600 dark:text-red-400 font-bold underline cursor-pointer">
+                        💬 Forgot Password? (WhatsApp Support)
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-20 right-1/2 translate-x-1/2 bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-full shadow-2xl opacity-0 transition duration-300 pointer-events-none z-50"></div>
+
+    <!-- Synchronous Data Core & Storage Handler -->
+    <script>
+        const defaultMembers = [
+            { name: "Sarthak Kamlesh Lande", occupation: "Student", phone: "+91 9673465849", email: "sarthak@gmail.com", dob: "15-08-2005", gender: "Male", passKey: "@Sarthak2009", photo: "", address: "Devshree Estate, Nashik", aadhaarMasked: "XXXX XXXX 3489", hidden: false, slabs: [], statements: [], viksitNotes: [] },
+            { name: "Kamlesh Ranu Lande", occupation: "Business", phone: "+91 7588332087", email: "kamlesh@gmail.com", dob: "10-05-1978", gender: "Male", passKey: "KAML1982", photo: "", address: "Devshree Estate, Nashik", aadhaarMasked: "XXXX XXXX 0541", hidden: false, slabs: [], statements: [], viksitNotes: [] },
+            { name: "Sulochana Kamlesh Lande", occupation: "Homemaker", phone: "+91 8422930046", email: "sulochana@gmail.com", dob: "22-11-1982", gender: "Female", passKey: "SULU1985", photo: "", address: "Devshree Estate, Nashik", aadhaarMasked: "XXXX XXXX 5541", hidden: false, slabs: [], statements: [], viksitNotes: [] },
+            { name: "Vimal Ranu Lande", occupation: "Elder", phone: "+91 9850301840", email: "vimal@gmail.com", dob: "04-03-1955", gender: "Female", passKey: "VIMA1111", photo: "", address: "Devshree Estate, Nashik", aadhaarMasked: "XXXX XXXX 8912", hidden: false, slabs: [], statements: [], viksitNotes: [] }
+        ];
+
+        function getInitials(name) {
+            if (!name) return 'FL';
+            const parts = String(name).trim().split(/\s+/).filter(Boolean);
+            if (parts.length === 0) return 'FL';
+            if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+
+        function createAvatarSVG(initials) {
+            const safeInitials = initials || 'FL';
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%"><rect width="100%" height="100%" fill="#e11d48"/><text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-size="34" font-weight="900">${safeInitials}</text></svg>`;
+            return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+        }
+
+        function createCrestSealSVG() {
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%"><rect width="120" height="120" rx="24" fill="#0f172a"/><circle cx="60" cy="60" r="48" stroke="#e11d48" stroke-width="4" fill="none"/><text x="60" y="65" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="900">LANDE</text></svg>`;
+            return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+        }
+
+        window.familyMembers = JSON.parse(localStorage.getItem('lande_members_data')) || defaultMembers;
+        window.customCrestLogo = localStorage.getItem('lande_crest_logo') || createCrestSealSVG();
+        window.wifiData = JSON.parse(localStorage.getItem('lande_wifi_data')) || { wifi1Ssid: "Airtel_Sarthak", wifi1Pass: "Sarthak @9673465849", wifi1Qr: "", wifi2Ssid: "Sarthak", wifi2Pass: "Sarthak @9673465849", wifi2Qr: "" };
+        window.directoryData = JSON.parse(localStorage.getItem('lande_directory_data')) || [
+            { name: "Sarthak", phone1: "+91 9673465849", phone2: "+91 8530498331" },
+            { name: "Kamlesh", phone1: "+91 7588332087", phone2: "" },
+            { name: "Sulochana", phone1: "+91 8422930046", phone2: "" },
+            { name: "Vimal", phone1: "+91 9850301840", phone2: "" }
+        ];
+        window.locationsData = JSON.parse(localStorage.getItem('lande_locations_data')) || [
+            { id: 1, title: "Primary Home Nashik", desc: "Flat no 29, Devshree Estate, Nashik", lat: 19.9975, lng: 73.7898 },
+            { id: 2, title: "Secondary Home Pune", desc: "Kothrud, Pune", lat: 18.5074, lng: 73.8077 }
+        ];
+        window.activityLogs = JSON.parse(localStorage.getItem('lande_activity_logs')) || [];
+        window.notificationsList = JSON.parse(localStorage.getItem('lande_notifications')) || [
+            { title: "Welcome", message: "Hello Family!!! I Sarthak Lande welcoming you to this portal.", hidden: false, time: "27 Jul 2026, 4:34 pm" }
+        ];
+
+        function saveToLocalCache() {
+            localStorage.setItem('lande_members_data', JSON.stringify(window.familyMembers));
+            localStorage.setItem('lande_crest_logo', window.customCrestLogo);
+            localStorage.setItem('lande_wifi_data', JSON.stringify(window.wifiData));
+            localStorage.setItem('lande_directory_data', JSON.stringify(window.directoryData));
+            localStorage.setItem('lande_locations_data', JSON.stringify(window.locationsData));
+            localStorage.setItem('lande_activity_logs', JSON.stringify(window.activityLogs));
+            localStorage.setItem('lande_notifications', JSON.stringify(window.notificationsList));
+        }
+        window.saveToLocalCache = saveToLocalCache;
+
+        function logActivity(action, fileName) {
+            const timestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' });
+            window.activityLogs.unshift({ action, fileName, time: timestamp });
+            if (window.activityLogs.length > 50) window.activityLogs.pop();
+            saveToLocalCache();
+        }
+
+        function compressImage(file, maxDimension, quality, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > height) {
+                        if (width > maxDimension) { height = Math.round((height * maxDimension) / width); width = maxDimension; }
+                    } else {
+                        if (height > maxDimension) { width = Math.round((width * maxDimension) / height); height = maxDimension; }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    callback(canvas.toDataURL('image/jpeg', quality));
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        window.compressImage = compressImage;
+
+        function exportPortalData() {
+            const portalData = {
+                members: window.familyMembers, crestLogo: window.customCrestLogo,
+                wifiData: window.wifiData, directoryData: window.directoryData,
+                locationsData: window.locationsData, activityLogs: window.activityLogs,
+                notificationsList: window.notificationsList, exportDate: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(portalData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.href = url;
+            downloadAnchor.download = `lande_family_portal_backup_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            showToast("Backup exported successfully!");
+        }
+        window.exportPortalData = exportPortalData;
+
+        function triggerImportPortalData() { document.getElementById('importJsonFileInput').click(); }
+        window.triggerImportPortalData = triggerImportPortalData;
+
+        function importPortalData(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = JSON.parse(evt.target.result);
+                    if (data.members) window.familyMembers = data.members;
+                    if (data.crestLogo) window.customCrestLogo = data.crestLogo;
+                    if (data.wifiData) window.wifiData = data.wifiData;
+                    if (data.directoryData) window.directoryData = data.directoryData;
+                    if (data.locationsData) window.locationsData = data.locationsData;
+                    if (data.activityLogs) window.activityLogs = data.activityLogs;
+                    if (data.notificationsList) window.notificationsList = data.notificationsList;
+                    saveToLocalCache();
+                    if (typeof window.updateAllUI === 'function') window.updateAllUI();
+                    if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+                    showToast("Portal data imported & applied!");
+                } catch(err) { showToast("Invalid JSON Backup File!"); }
+            };
+            reader.readAsText(file);
+        }
+        window.importPortalData = importPortalData;
+    </script>
+
+    <!-- Fully Fixed Firebase Realtime Cloud Sync Script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB-w8KRaZ49T6D5E2beZAZdTLDdWUQjamM",
+            authDomain: "lande-family-music-huub.firebaseapp.com",
+            projectId: "lande-family-music-huub",
+            storageBucket: "lande-family-music-huub.appspot.com",
+            messagingSenderId: "1059614458620",
+            appId: "1:1059614458620:web:289ef04ee9cee25b9e8d79",
+            measurementId: "G-XLEE7F3877"
+        };
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'lande-family-music-huub';
+
+        window.isCloudSynced = false;
+
+        function updateSyncStatusUI(isSynced) {
+            window.isCloudSynced = isSynced;
+            const indicator = document.getElementById('syncIndicator');
+            const statusDetail = document.getElementById('cloudStatusDetailText');
+            const menuCloudText = document.getElementById('menuCloudStatusText');
+            if (indicator) {
+                indicator.className = `w-2.5 h-2.5 rounded-full ${isSynced ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`;
+            }
+            if (statusDetail) {
+                statusDetail.innerText = isSynced ? "Connected successfully to Firebase Cloud Vault (lande-family-music-huub)." : "Connecting or offline to Cloud Vault...";
+            }
+            if (menuCloudText) {
+                menuCloudText.innerText = isSynced ? "● Live Synced" : "● Connecting";
+                menuCloudText.className = `text-[8px] sm:text-[9px] font-bold mt-0.5 ${isSynced ? 'text-emerald-500' : 'text-amber-500'}`;
+            }
+        }
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+
+            signInAnonymously(auth).then(() => {
+                console.log("Firebase Auth Authenticated Successfully.");
+                updateSyncStatusUI(true);
+            }).catch((err) => {
+                console.error("Auth error:", err);
+                updateSyncStatusUI(false);
+            });
+
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'portal_state', 'state_doc');
+                    onSnapshot(docRef, (docSnap) => {
+                        if (docSnap.exists()) {
+                            const data = docSnap.data();
+                            if (data.members && Array.isArray(data.members)) window.familyMembers = data.members;
+                            if (data.crestLogo) window.customCrestLogo = data.crestLogo;
+                            if (data.wifiData) window.wifiData = data.wifiData;
+                            if (data.directoryData) window.directoryData = data.directoryData;
+                            if (data.locationsData) window.locationsData = data.locationsData;
+                            if (data.activityLogs) window.activityLogs = data.activityLogs;
+                            if (data.notificationsList) window.notificationsList = data.notificationsList;
+                            saveToLocalCache();
+                            if (typeof window.updateAllUI === 'function') window.updateAllUI();
+                            updateSyncStatusUI(true);
+                        }
+                    }, (err) => { updateSyncStatusUI(false); });
+                }
+            });
+
+            window.saveDataToFirestore = async function() {
+                saveToLocalCache();
+                const payload = { 
+                    members: window.familyMembers, crestLogo: window.customCrestLogo,
+                    wifiData: window.wifiData, directoryData: window.directoryData,
+                    locationsData: window.locationsData, activityLogs: window.activityLogs,
+                    notificationsList: window.notificationsList
+                };
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'portal_state', 'state_doc');
+                    await setDoc(docRef, payload);
+                    updateSyncStatusUI(true);
+                    showToast("Published & synced live across all devices!");
+                } catch(e) {
+                    updateSyncStatusUI(false);
+                    showToast("Saved locally (Cloud Sync Failed)");
+                }
+            };
+        } catch(e) {
+            updateSyncStatusUI(false);
+            window.saveDataToFirestore = async function() { saveToLocalCache(); showToast("Saved locally!"); };
+        }
+
+        function updateAllUI() {
+            if (typeof updateCrestLogoDisplay === 'function') updateCrestLogoDisplay();
+            if (typeof renderMembersGrid === 'function') renderMembersGrid();
+            if (window.unlockedMemberIndex !== null && window.familyMembers[window.unlockedMemberIndex]) {
+                if (typeof openProfileHub === 'function') openProfileHub(window.unlockedMemberIndex);
+            }
+        }
+
+        function updateCrestLogoDisplay() {
+            const headerLogo = document.getElementById('appHeaderLogo');
+            if (headerLogo) headerLogo.src = window.customCrestLogo;
+            const badge = document.getElementById('notifBadge');
+            const activeNotifs = (window.notificationsList || []).filter(n => !n.hidden);
+            if (badge && activeNotifs.length > 0) {
+                badge.classList.remove('hidden');
+            } else if (badge) {
+                badge.classList.add('hidden');
+            }
+        }
+
+        window.updateAllUI = updateAllUI;
+        window.updateCrestLogoDisplay = updateCrestLogoDisplay;
+    </script>
+
+    <!-- Global Helpers & Core Functions -->
+    <script>
+        window.isAdminLoggedIn = false;
+        window.targetAuthIndex = 0;
+        window.unlockedMemberIndex = null;
+        let cropTargetDocIndex = 0;
+        let cropImg = new Image();
+        let targetSlabIndex = null;
+        let tempSlabIcon = "";
+        let tempStatementLogo = "";
+        let tempStatementPdf = "";
+        let tempViksitFile = "";
+        let tempViksitFileName = "";
+        let tempNotifFile = "";
+        let tempNotifFileName = "";
+
+        function switchNavTab(tabName) {
+            if (tabName === 'home') {
+                backToDashboard();
+                showToast("Home Active");
+            } else if (tabName === 'groups') {
+                backToDashboard();
+                showToast("Family Groups (Coming Soon!)");
+            } else if (tabName === 'about') {
+                showToast("Developed by Sarthak Lande | Lande Family Portal v2.3");
+            }
+        }
+
+        function openCloudStatusModal() {
+            const statusDetail = document.getElementById('cloudStatusDetailText');
+            if (statusDetail) {
+                statusDetail.innerText = window.isCloudSynced ? "Connected successfully to Firebase Cloud Vault (lande-family-music-huub)." : "Connecting or offline to Cloud Vault...";
+            }
+            openModal('cloudStatusModal');
+        }
+
+        function toggleAdminPasswordVisibility() {
+            const passInput = document.getElementById('adminPassInput');
+            if (passInput) passInput.type = passInput.type === "password" ? "text" : "password";
+        }
+        function toggleVaultPasswordVisibility() {
+            const passInput = document.getElementById('passInput');
+            if (passInput) passInput.type = passInput.type === "password" ? "text" : "password";
+        }
+        function toggleEditPassVisibility() {
+            const passInput = document.getElementById('editMemberPassKey');
+            if (passInput) passInput.type = passInput.type === "password" ? "text" : "password";
+        }
+
+        function sendWhatsAppForgotRequest() {
+            const message = encodeURIComponent(`Hello Sarthak, I forgot my PassKey for the Lande Family Portal vault. Please help me reset or recover it. Thank you!`);
+            window.open(`https://wa.me/919673465849?text=${message}`, '_blank');
+        }
+
+        function handleProfileClick(e, index) {
+            if (e) e.stopPropagation();
+            if (index === undefined || index === null || !window.familyMembers || !window.familyMembers[index]) {
+                showToast("Profile not found");
+                return;
+            }
+            if (window.isAdminLoggedIn) openProfileHub(index);
+            else openModal('passwordModal', index);
+        }
+
+        function renderMembersGrid() {
+            const grid = document.getElementById('membersGrid');
+            if (!grid) return;
+            if (!window.familyMembers || window.familyMembers.length === 0) {
+                grid.innerHTML = '<p class="text-xs text-slate-400 col-span-full text-center py-4">No family profiles recorded.</p>';
+                return;
+            }
+
+            let visibleMembers = window.familyMembers.map((m, originalIndex) => ({ ...m, originalIndex }))
+                .filter(m => window.isAdminLoggedIn || !m.hidden);
+
+            if (visibleMembers.length === 0) {
+                grid.innerHTML = '<p class="text-xs text-slate-400 col-span-full text-center py-4">No active profiles available.</p>';
+                return;
+            }
+
+            grid.innerHTML = visibleMembers.map((m) => {
+                const initials = getInitials(m.name);
+                const photoSrc = m.photo || createAvatarSVG(initials);
+                const hiddenBadge = m.hidden ? `<span class="px-2 py-0.5 bg-red-500/20 text-red-500 rounded-full text-[10px] font-bold">Hidden</span>` : '';
+                return `
+                <div onclick="handleProfileClick(event, ${m.originalIndex})" class="glass-panel rounded-3xl p-5 text-center flex flex-col items-center shadow-sm hover:shadow-lg cursor-pointer transition-all transform hover:-translate-y-1 relative z-10 group">
+                    ${m.hidden ? `<div class="absolute top-3 right-3">${hiddenBadge}</div>` : ''}
+                    <img src="${photoSrc}" class="w-16 h-16 rounded-2xl object-cover mb-3 shadow ring-2 ring-red-500 group-hover:scale-105 transition-transform pointer-events-none" alt="${m.name}">
+                    <h3 class="font-extrabold text-sm text-slate-900 dark:text-white pointer-events-none">${m.name}</h3>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 pointer-events-none">${m.occupation || 'Family Member'}</p>
+                    <div class="mt-4 flex items-center justify-center gap-2">
+                        <button onclick="handleProfileClick(event, ${m.originalIndex})" class="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold cursor-pointer shadow transition-colors">
+                            ${window.isAdminLoggedIn ? 'Open Profile Hub' : 'Open Vault'}
+                        </button>
+                        ${window.isAdminLoggedIn ? `
+                            <button onclick="toggleHideProfile(event, ${m.originalIndex})" class="px-2 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-xs rounded-xl font-bold" title="Hide/Show Profile">
+                                ${m.hidden ? '👁️ Show' : '🙈 Hide'}
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;}).join('');
+        }
+
+        function toggleHideProfile(e, index) {
+            e.stopPropagation();
+            if (!window.familyMembers[index]) return;
+            window.familyMembers[index].hidden = !window.familyMembers[index].hidden;
+            saveToLocalCache();
+            renderMembersGrid();
+            if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+            showToast(window.familyMembers[index].hidden ? "Profile hidden from public view" : "Profile is now visible");
+        }
+
+        function toggleAdminLoginModal() {
+            if (window.isAdminLoggedIn) logoutAdmin();
+            else openModal('adminModal');
+        }
+
+        function verifyAdminPassword(e) {
+            e.preventDefault();
+            const val = document.getElementById('adminPassInput').value.trim();
+            if (val === "@Sarthak2009" || val === "ADMIN2009") {
+                window.isAdminLoggedIn = true;
+                closeModal('adminModal');
+                document.getElementById('adminPassInput').value = '';
+                document.getElementById('adminPassError').classList.add('hidden');
+                document.getElementById('adminNoticeBar').classList.remove('hidden');
+                const menuAdminText = document.getElementById('menuAdminStatusText');
+                if (menuAdminText) { menuAdminText.innerText = "● Active"; menuAdminText.className = "text-[8px] sm:text-[9px] font-bold mt-0.5 text-emerald-400"; }
+                document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+                renderMembersGrid();
+                showToast("Admin Logged In successfully!");
+            } else {
+                document.getElementById('adminPassError').classList.remove('hidden');
+            }
+        }
+
+        function logoutAdmin() {
+            window.isAdminLoggedIn = false;
+            document.getElementById('adminNoticeBar').classList.add('hidden');
+            const menuAdminText = document.getElementById('menuAdminStatusText');
+            if (menuAdminText) { menuAdminText.innerText = "Control"; menuAdminText.className = "text-[8px] sm:text-[9px] font-bold mt-0.5 text-red-400"; }
+            document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+            renderMembersGrid();
+            showToast("Admin Logged Out");
+        }
+
+        function openModal(id, index = 0) {
+            if (id === 'passwordModal') {
+                window.targetAuthIndex = index;
+            }
+            const modalEl = document.getElementById(id);
+            if (modalEl) modalEl.classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            const modalEl = document.getElementById(id);
+            if (modalEl) modalEl.classList.add('hidden');
+        }
+
+        function verifyPassword(e) {
+            e.preventDefault();
+            const passInput = document.getElementById('passInput');
+            const pass = passInput ? passInput.value.trim() : '';
+            
+            if (window.isAdminLoggedIn) {
+                closeModal('passwordModal');
+                if (passInput) passInput.value = '';
+                openProfileHub(window.targetAuthIndex);
+                return;
+            }
+
+            let matchedIndex = window.familyMembers.findIndex(m => m.passKey === pass || pass === "@Sarthak2009");
+            if (matchedIndex !== -1) {
+                closeModal('passwordModal');
+                if (passInput) passInput.value = '';
+                openProfileHub(matchedIndex);
+            } else {
+                showToast("Incorrect Account Holder's Password!");
+            }
+        }
+
+        function openProfileHub(index) {
+            if (index === null || index === undefined || !window.familyMembers[index]) return;
+            window.unlockedMemberIndex = index;
+            const member = window.familyMembers[index];
+            document.getElementById('hubName').innerText = member.name;
+            document.getElementById('hubPhone').innerText = member.phone;
+            document.getElementById('hubDob').innerText = member.dob;
+            document.getElementById('hubGender').innerText = member.gender || "Male";
+            document.getElementById('hubAadhaar').innerText = member.aadhaarMasked;
+            document.getElementById('hubAddress').innerText = member.address;
+            document.getElementById('hubPassKey').innerText = member.passKey;
+
+            const initials = getInitials(member.name);
+            document.getElementById('hubPhoto').src = member.photo || createAvatarSVG(initials);
+
+            renderSlabsAndStatements(member);
+            renderViksitNotes(member);
+
+            if (window.isAdminLoggedIn) {
+                document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+            }
+
+            document.getElementById('mainDashboardView').classList.add('hidden');
+            document.getElementById('profileHubPageView').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function backToDashboard() {
+            document.getElementById('profileHubPageView').classList.add('hidden');
+            document.getElementById('mainDashboardView').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function openNotificationsModal() {
+            const container = document.getElementById('notificationsListContainer');
+            if (!container) return;
+            const activeNotifs = (window.notificationsList || []).filter(n => !n.hidden);
+            if (activeNotifs.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 italic">No new notifications.</p>';
+            } else {
+                container.innerHTML = activeNotifs.map(n => `
+                    <div class="p-3.5 bg-slate-900 text-slate-200 rounded-2xl border border-red-500/20 space-y-1.5 shadow-md">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-red-400 text-xs">${n.title}</span>
+                            <span class="text-[9px] text-slate-400">${n.time || ''}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-300 leading-relaxed">${n.message}</p>
+                    </div>
+                `).join('');
+            }
+            openModal('notificationsModal');
+        }
+
+        function clearNotifications() {
+            window.notificationsList = window.notificationsList.filter(n => n.hidden);
+            saveToLocalCache();
+            updateCrestLogoDisplay();
+            openNotificationsModal();
+            showToast("Notifications cleared.");
+        }
+
+        function renderViksitNotes(member) {
+            const container = document.getElementById('viksitLinksContainer');
+            if (!container) return;
+            if (!member.viksitNotes || member.viksitNotes.length === 0) {
+                container.innerHTML = '<p class="text-[11px] text-slate-400 italic">No VIKSIT notes or apps added yet.</p>';
+                return;
+            }
+            container.innerHTML = member.viksitNotes.map((v, vIdx) => `
+                <div class="p-3 bg-slate-900/90 rounded-2xl border border-red-500/30 space-y-2 text-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="font-black text-red-300 text-sm">${v.title}</span>
+                        <div class="flex items-center gap-1.5">
+                            <button class="admin-only ${window.isAdminLoggedIn?'':'hidden'} px-2 py-0.5 bg-amber-500 text-slate-950 font-bold rounded text-[10px]" onclick="openEditViksitModal(${vIdx})">Edit</button>
+                            <button class="admin-only ${window.isAdminLoggedIn?'':'hidden'} px-2 py-0.5 bg-red-600 text-white font-bold rounded text-[10px]" onclick="deleteViksitNote(${vIdx})">Delete</button>
+                        </div>
+                    </div>
+                    <p class="${v.fontSize || 'text-xs'} ${v.isBold ? 'font-bold' : 'font-normal'} text-slate-200 whitespace-pre-wrap">${v.desc || ''}</p>
+                </div>
+            `).join('');
+        }
+
+        function renderSlabsAndStatements(member) {
+            const container = document.getElementById('slabsAndStatementsContainer');
+            if (!container) return;
+            let html = '';
+
+            if (member.slabs && member.slabs.length > 0) {
+                member.slabs.forEach((slab, sIdx) => {
+                    const iconDisplay = slab.icon ? `<img src="${slab.icon}" class="w-full h-full object-cover rounded">` : '📁';
+                    html += `
+                    <div class="p-3 bg-white/80 dark:bg-slate-800 rounded-2xl border space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-xs flex items-center gap-2">
+                                <div class="w-6 h-6 rounded bg-slate-200 flex items-center justify-center overflow-hidden shrink-0">${iconDisplay}</div>
+                                ${slab.title}
+                            </span>
+                        </div>
+                    </div>`;
+                });
+            }
+
+            if (!html) html = '<p class="text-xs text-slate-400 italic">No Slabs or Statements added yet.</p>';
+            container.innerHTML = html;
+        }
+
+        function triggerLogoUpload() { document.getElementById('logoFileInput').click(); }
+        function handleLogoUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            compressImage(file, 150, 0.6, (compressedBase64) => {
+                window.customCrestLogo = compressedBase64;
+                localStorage.setItem('lande_crest_logo', window.customCrestLogo);
+                if (typeof window.updateCrestLogoDisplay === 'function') window.updateCrestLogoDisplay();
+                if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+                showToast("Crest Logo Updated!");
+            });
+        }
+
+        function toggleTheme() {
+            const htmlEl = document.documentElement;
+            const icon = document.getElementById('themeIcon');
+            if (htmlEl.classList.contains('dark')) {
+                htmlEl.classList.remove('dark');
+                htmlEl.classList.add('light');
+                if(icon) icon.innerText = "🌙";
+                localStorage.setItem('lande_theme', 'light');
+            } else {
+                htmlEl.classList.remove('light');
+                htmlEl.classList.add('dark');
+                if(icon) icon.innerText = "☀️";
+                localStorage.setItem('lande_theme', 'dark');
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+            toast.innerText = msg;
+            toast.classList.remove('opacity-0');
+            setTimeout(() => toast.classList.add('opacity-0'), 2500);
+        }
+
+        window.onload = function() {
+            if (typeof window.updateCrestLogoDisplay === 'function') window.updateCrestLogoDisplay();
+            renderMembersGrid();
+
+            const savedTheme = localStorage.getItem('lande_theme') || 'light';
+            const icon = document.getElementById('themeIcon');
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+                if(icon) icon.innerText = "☀️";
+            } else {
+                if(icon) icon.innerText = "🌙";
+            }
+        };
+    </script>
+</body>
+</html>
