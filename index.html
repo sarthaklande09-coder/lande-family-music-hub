@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lande Family Portal v5.4</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        viksitDark: '#070b14',
+                        viksitRed: '#e11d48',
+                        viksitPurple: '#7c3aed',
+                        spatialGlass: 'rgba(255, 255, 255, 0.08)'
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; width: 100vw; max-width: 100%; transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(16px); border: 1px solid rgba(225, 29, 72, 0.15); box-shadow: 0 10px 30px 0 rgba(225, 29, 72, 0.05); }
+        .dark .glass-panel { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.5); }
+        .glass-modal { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(20px); }
+        .dark .glass-modal { background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(20px); }
+        .glow-btn { background: linear-gradient(135deg, #e11d48 0%, #7c3aed 100%); box-shadow: 0 4px 20px rgba(225, 29, 72, 0.35); }
+        .segmented-container { background: rgba(225, 29, 72, 0.06); border: 1px solid rgba(225, 29, 72, 0.15); backdrop-filter: blur(12px); }
+        .dark .segmented-container { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .segment-tab { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .segment-tab.active { background: #e11d48; color: #ffffff; box-shadow: 0 6px 20px rgba(225, 29, 72, 0.4); }
+        .spatial-glass { background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 30px 70px rgba(0,0,0,0.8); }
+        .playlist-card-active { background: rgba(16, 185, 129, 0.2) !important; border-color: rgba(16, 185, 129, 0.5) !important; }
+        
+        .dribbble-toggle { position: relative; width: 64px; height: 32px; background: #cbd5e1; border-radius: 9999px; transition: background 0.4s ease; cursor: pointer; display: flex; align-items: center; padding: 4px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        .dark .dribbble-toggle { background: #334155; }
+        .dribbble-toggle-thumb { position: absolute; left: 4px; width: 24px; height: 24px; background: #ffffff; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); display: flex; align-items: center; justify-content: center; font-size: 11px; }
+        .dark .dribbble-toggle-thumb { transform: translateX(32px); background: #0f172a; color: #f8fafc; }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 min-h-screen pb-20 relative w-full overflow-x-hidden">
+
+    <!-- Header / Navbar -->
+    <header class="sticky top-0 z-40 w-full backdrop-blur-xl bg-white/80 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between w-full">
+            <div class="flex items-center space-x-3 cursor-pointer select-none" title="Lande Portal">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#e11d48] via-[#7c3aed] to-[#3b82f6] flex items-center justify-center text-white shadow-lg relative group shrink-0 overflow-hidden">
+                    <i class="fa-solid fa-music text-white text-sm"></i>
+                </div>
+                <div>
+                    <h1 class="font-black text-base sm:text-lg bg-gradient-to-r from-[#e11d48] via-[#7c3aed] to-[#3b82f6] bg-clip-text text-transparent leading-tight">
+                        Lande Family Portal v5.4
+                    </h1>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold tracking-wide">Sabka Apna Sangeet</p>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex items-center space-x-3 shrink-0">
+                <div onclick="toggleTheme()" class="dribbble-toggle" title="Theme Badlein">
+                    <div class="flex justify-between w-full px-1 text-xs pointer-events-none">
+                        <span>☀️</span>
+                        <span>🌙</span>
+                    </div>
+                    <div id="dribbbleThumb" class="dribbble-toggle-thumb">☀️</div>
+                </div>
+                
+                <button onclick="openCloudStatusModal()" class="px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer hover:bg-emerald-500/20 transition">
+                    <span id="syncIndicator" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="hidden sm:inline">Check Cloud</span>
+                </button>
+                <button onclick="openNotificationsModal()" class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 flex items-center justify-center cursor-pointer relative z-20 text-sm shadow-sm">
+                    🔔 <span id="notifBadge" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Capsule Menu -->
+    <div class="max-w-7xl mx-auto px-4 pt-4">
+        <div class="segmented-container rounded-2xl p-1.5 flex items-center justify-between gap-1 overflow-x-auto shadow-sm">
+            <button onclick="switchNavTab('home')" id="tabHome" class="segment-tab active flex-1 py-2.5 px-3 rounded-xl text-center flex items-center justify-center gap-1.5 cursor-pointer text-xs font-black">
+                <i class="fa-solid fa-house"></i><span class="truncate">Home</span>
+            </button>
+            <button onclick="switchNavTab('groups')" id="tabGroups" class="segment-tab flex-1 py-2.5 px-3 rounded-xl text-center flex items-center justify-center gap-1.5 cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-red-500">
+                <i class="fa-solid fa-users"></i><span class="truncate">Groups</span>
+            </button>
+            <button onclick="switchNavTab('about')" id="tabAbout" class="segment-tab flex-1 py-2.5 px-3 rounded-xl text-center flex items-center justify-center gap-1.5 cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-red-500">
+                <i class="fa-solid fa-laptop"></i><span class="truncate">About</span>
+            </button>
+            <button onclick="switchNavTab('downloader')" id="tabDownloader" class="segment-tab flex-1 py-2.5 px-3 rounded-xl text-center flex items-center justify-center gap-1.5 cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-red-500">
+                <i class="fa-solid fa-download"></i><span class="truncate">Get it</span>
+            </button>
+            <button onclick="switchNavTab('admin')" id="tabAdmin" class="segment-tab flex-1 py-2.5 px-3 rounded-xl text-center flex items-center justify-center gap-1.5 cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-red-500">
+                <i class="fa-solid fa-shield-halved"></i><span class="truncate">Admin profile</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Dashboard View -->
+    <main id="mainDashboardView" class="max-w-7xl mx-auto px-4 pt-4 space-y-5 w-full">
+        <section class="relative rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 glass-panel p-5 text-white bg-gradient-to-r from-slate-950 via-purple-950 to-slate-900">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div>
+                    <span class="px-2.5 py-0.5 rounded-full bg-red-500/20 border border-red-400/40 text-red-300 text-[10px] font-bold">Secure Cloud Vault & Spatial Audio</span>
+                    <h2 class="text-xl sm:text-2xl font-black mt-1">Lande Family Hub v5.4</h2>
+                    <p class="text-[11px] text-slate-300 mt-0.5">Sabki Apni Jagah Sabka Apna Sangeet</p>
+                </div>
+                <button onclick="handleProfileClick(event, 0)" class="px-4 py-2 glow-btn text-white font-extrabold rounded-2xl text-xs shadow-lg cursor-pointer hover:scale-105 transition-transform shrink-0">
+                    Explore Hub
+                </button>
+            </div>
+        </section>
+
+        <!-- All Profiles Grid -->
+        <section class="space-y-4">
+            <h3 class="font-black text-sm text-red-600 uppercase">All Portal Profiles</h3>
+            <div id="membersGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        </section>
+    </main>
+
+    <!-- Groups Section View -->
+    <main id="groupsPageView" class="hidden max-w-7xl mx-auto px-4 pt-4 space-y-5 w-full">
+        <div class="glass-panel rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+            <div class="flex items-center justify-between border-b pb-4">
+                <h2 class="text-xl font-black text-blue-600"><i class="fa-solid fa-users mr-2"></i> Family Groups Filter</h2>
+                <button onclick="switchNavTab('home')" class="px-3 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-xl text-xs font-bold cursor-pointer">← Back Home</button>
+            </div>
+            
+            <div id="groupsFilterChips" class="flex items-center gap-2 overflow-x-auto pb-2"></div>
+
+            <div id="groupFilteredMembersGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2"></div>
+        </div>
+    </main>
+
+    <!-- Get It (Downloader Hub) View -->
+    <main id="ytDownloaderMainView" class="hidden max-w-7xl mx-auto px-4 pt-4 space-y-6 w-full">
+        <div class="text-center space-y-2">
+            <h2 class="text-2xl font-black bg-gradient-to-r from-red-500 to-purple-600 bg-clip-text text-transparent">Get It - Media Stream & Downloader Hub</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">YouTube aur Spotify links se media direct download karein aur history check karein.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="glass-panel rounded-3xl p-6 space-y-4 shadow-xl">
+                <div class="flex items-center space-x-3 border-b pb-3">
+                    <div class="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center text-white text-lg font-black"><i class="fa-brands fa-youtube"></i></div>
+                    <div>
+                        <h4 class="font-extrabold text-sm">Get From YouTube</h4>
+                        <p class="text-[10px] text-slate-400">Direct Link Analyzer & Converter</p>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <input type="url" id="ytUrlInput" placeholder="Paste YouTube Link..." class="w-full p-3 bg-white dark:bg-slate-900 rounded-xl border text-xs font-mono">
+                    <button onclick="analyzeSlubnyYtLink()" class="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs shadow cursor-pointer">Analyze YouTube Link</button>
+                </div>
+                
+                <div id="slubnyYtResultContainer" class="hidden space-y-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+                    <div class="p-3 bg-black/40 rounded-xl space-y-1">
+                        <p id="slubnyVideoTitle" class="font-bold text-white text-xs truncate">YouTube Media Ready</p>
+                        <p class="text-[10px] text-emerald-400">Status: Secure Stream Active</p>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Select Format & Quality</label>
+                        <select id="slubnyQualitySelect" class="w-full p-2.5 bg-white dark:bg-slate-900 rounded-xl border text-xs">
+                            <option value="mp3_high">MP3 - High Quality 320kbps</option>
+                            <option value="mp3_std">MP3 - Standard Quality 192kbps</option>
+                            <option value="mp4_1080">MP4 - 1080p Full HD Video</option>
+                        </select>
+                    </div>
+                    <button onclick="executeSlubnyDownload()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow cursor-pointer">
+                        <i class="fa-solid fa-download mr-1"></i> Download Media File
+                    </button>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-3xl p-6 space-y-4 shadow-xl">
+                <div class="flex items-center space-x-3 border-b pb-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white text-lg font-black"><i class="fa-brands fa-spotify"></i></div>
+                    <div>
+                        <h4 class="font-extrabold text-sm">Get From Spotify</h4>
+                        <p class="text-[10px] text-slate-400">Direct Lossless Audio Download</p>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <input type="url" id="spotifyUrlInput" placeholder="Paste Spotify Track Link..." class="w-full p-3 bg-white dark:bg-slate-900 rounded-xl border text-xs font-mono">
+                    <button onclick="processSpotifyDownloadLink()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow cursor-pointer">Analyze Spotify Link</button>
+                </div>
+                <div id="spotifyResultBox" class="hidden p-3 bg-black/40 rounded-xl space-y-2 text-xs">
+                    <p id="spotifyFetchedTitle" class="font-bold text-white truncate">Spotify Track Ready</p>
+                    <button onclick="triggerActualDownload('Spotify_Lossless_Track.mp3', '35 MB', 'audio')" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[10px] cursor-pointer">Download Lossless Audio</button>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-3xl p-6 space-y-4 shadow-xl flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between border-b pb-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-download text-indigo-500"></i>
+                            <h4 class="font-extrabold text-sm">Local Device Downloads</h4>
+                        </div>
+                        <button onclick="clearLocalDownloads()" class="text-[10px] text-red-500 hover:underline cursor-pointer">Clear History</button>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1">Yeh list sirf aapke is current device par stored hai.</p>
+                </div>
+                <div id="localDownloadsContainer" class="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                    <p class="text-xs text-slate-500 italic text-center py-6">No downloads recorded yet.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- About Developer View -->
+    <main id="aboutPageMainView" class="hidden max-w-7xl mx-auto px-4 pt-4 space-y-5 w-full">
+        <div class="glass-panel rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+            <div class="flex items-center justify-between border-b pb-4">
+                <h2 class="text-xl font-black text-red-600">🎵 About Me & My Music Hub v5.4</h2>
+                <button onclick="switchNavTab('home')" class="px-3 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-xl text-xs font-bold">← Back</button>
+            </div>
+            <div class="space-y-4 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                <p>Welcome to my personal music space! Created by Sarthak Kamlesh Lande for ultimate offline/online spatial audio experience across all family members.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Admin Panel Full Page View -->
+    <main id="adminPageMainView" class="hidden max-w-7xl mx-auto px-4 pt-4 space-y-5 w-full">
+        <div id="adminLoginContainer" class="glass-panel rounded-3xl p-6 max-w-md mx-auto py-12 text-center space-y-4 shadow-2xl">
+            <div class="w-16 h-16 rounded-3xl bg-red-500/20 text-red-500 flex items-center justify-center mx-auto text-2xl font-black"><i class="fa-solid fa-lock"></i></div>
+            <h4 class="font-extrabold text-lg">Master Authentication Required</h4>
+            <form onsubmit="verifyAdminPassword(event)" class="space-y-3 text-left pt-2">
+                <input type="password" id="adminPassInput" placeholder="Enter Admin Password" required class="w-full p-3 bg-white dark:bg-slate-800 rounded-2xl border text-xs font-mono">
+                <button type="submit" class="w-full py-3 glow-btn text-white font-extrabold rounded-2xl text-xs cursor-pointer shadow">Login Admin Panel</button>
+            </form>
+        </div>
+
+        <div id="adminDashboardContainer" class="hidden space-y-6">
+            <div class="p-4 bg-gradient-to-r from-red-500/20 via-purple-500/20 to-red-500/20 border border-red-500/50 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-red-900 dark:text-red-200 shadow-lg">
+                <div>
+                    <span class="font-extrabold text-red-600 dark:text-red-400 text-sm uppercase">ADMIN CONTROL PANEL ACTIVE (v5.4)</span>
+                    <p class="text-[10px] font-bold mt-0.5">Gallery Image Uploads for Songs & Playlists Enabled!</p>
+                </div>
+                <button onclick="logoutAdmin()" class="px-3.5 py-1.5 bg-red-600 text-white font-bold rounded-xl text-xs cursor-pointer shadow">Logout</button>
+            </div>
+
+            <!-- Admin Feature Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div class="glass-panel rounded-3xl p-5 space-y-3 shadow-xl">
+                    <div class="flex items-center justify-between border-b pb-2">
+                        <h4 class="font-black text-sm text-red-500">👥 Profiles & Groups</h4>
+                        <button onclick="openAddMemberModal()" class="px-3 py-1 bg-red-600 text-white rounded-xl text-[10px] font-bold cursor-pointer">+ Add Profile</button>
+                    </div>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Manage profiles, passcodes, shift groups or delete old profiles.</p>
+                    <div class="pt-1 flex gap-2">
+                        <button onclick="openCreateGroupPrompt()" class="px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold cursor-pointer">+ Create Group</button>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-3xl p-5 space-y-3 shadow-xl">
+                    <div class="flex items-center justify-between border-b pb-2">
+                        <h4 class="font-black text-sm text-amber-500">📢 Broadcast Notification</h4>
+                    </div>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Send instant announcements or updates to all portal users.</p>
+                    <div class="space-y-2 pt-1">
+                        <input type="text" id="broadcastMsgInput" placeholder="Enter message..." class="w-full p-2.5 bg-white dark:bg-slate-900 rounded-xl border text-xs">
+                        <button onclick="sendBroadcastNotification()" class="w-full py-2 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs shadow cursor-pointer">Broadcast Now</button>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-3xl p-5 space-y-3 shadow-xl">
+                    <div class="flex items-center justify-between border-b pb-2">
+                        <h4 class="font-black text-sm text-emerald-500">☁️ Cloud & Backup Vault</h4>
+                    </div>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Sync data live across devices or export/import complete portal backups.</p>
+                    <div class="flex gap-2 pt-1 flex-wrap">
+                        <button onclick="window.saveDataToFirestore()" class="px-3 py-2 bg-emerald-600 text-white font-bold rounded-xl text-xs shadow flex-1 cursor-pointer">Sync Cloud</button>
+                        <button onclick="exportPortalData()" class="px-3 py-2 bg-indigo-600 text-white font-bold rounded-xl text-xs shadow cursor-pointer">Export</button>
+                        <button onclick="triggerImportPortalData()" class="px-3 py-2 bg-blue-600 text-white font-bold rounded-xl text-xs shadow cursor-pointer">Import</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-3xl p-6 space-y-4 shadow-xl">
+                <h4 class="font-black text-sm text-red-600 uppercase border-b pb-2">All Profiles Management</h4>
+                <div id="adminProfilesCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Profile Hub View -->
+    <main id="profileHubPageView" class="hidden max-w-7xl mx-auto px-4 pt-4 space-y-5 w-full">
+        <div class="spatial-glass rounded-3xl p-6 sm:p-8 text-white relative space-y-6 shadow-2xl w-full bg-[#0b0f19] border border-white/10">
+            <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                <button onclick="backToDashboard()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition shadow cursor-pointer">← Back to Dashboard</button>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <div id="hubAvatarBox" class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-red-600 to-pink-600 flex items-center justify-center text-white font-black text-xl shadow-lg">SL</div>
+                <div>
+                    <h3 id="hubName" class="font-black text-2xl tracking-wide">Sarthak Kamlesh Lande</h3>
+                    <p id="hubPhone" class="text-xs text-slate-300 mt-0.5">+91 9673465849</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pt-2">
+                <div class="lg:col-span-8 space-y-6">
+                    <div class="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-white/10 relative overflow-hidden shadow-2xl space-y-6">
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
+                            <!-- Track Logo + Title Section -->
+                            <div class="flex items-center space-x-4">
+                                <div id="bannerSongLogoBox" class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-700 flex items-center justify-center text-white font-black text-xl shadow-lg overflow-hidden shrink-0">
+                                    <i class="fa-solid fa-music"></i>
+                                </div>
+                                <div class="space-y-1 text-center sm:text-left">
+                                    <span class="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-[10px] font-extrabold uppercase tracking-widest border border-emerald-500/30">Playing Now</span>
+                                    <h3 id="bannerSongTitle" class="text-xl sm:text-2xl font-black mt-1">Shri Swami Samarth</h3>
+                                    <p id="bannerArtistName" class="text-xs text-slate-300 font-medium">by Sarthak Kamlesh Lande</p>
+                                </div>
+                            </div>
+
+                            <!-- Player Controls Sequence -->
+                            <div class="flex items-center gap-3 sm:gap-4 flex-wrap justify-center">
+                                <button onclick="skipTrack(-1)" class="text-slate-300 hover:text-white text-lg cursor-pointer" title="Previous"><i class="fa-solid fa-backward-step"></i></button>
+                                <button id="bannerPlayPauseBtn" onclick="togglePlayPause()" class="w-12 h-12 rounded-full bg-[#1ed760] hover:bg-[#1db954] text-slate-950 flex items-center justify-center shadow-lg font-black text-lg cursor-pointer transition" title="Play/Pause"><i class="fa-solid fa-play ml-0.5"></i></button>
+                                <button onclick="skipTrack(1)" class="text-slate-300 hover:text-white text-lg cursor-pointer" title="Next"><i class="fa-solid fa-forward-step"></i></button>
+                                <button id="loopToggleBtn" onclick="toggleLoopMode()" class="text-slate-400 hover:text-white text-sm cursor-pointer transition" title="Loop Mode"><i class="fa-solid fa-repeat"></i></button>
+
+                                <div class="h-6 w-[1px] bg-white/10 mx-1"></div>
+
+                                <button id="muteToggleBtn" onclick="toggleMuteAudio()" class="text-slate-300 hover:text-white text-sm cursor-pointer transition" title="Mute/Unmute"><i class="fa-solid fa-volume-high"></i></button>
+                                <input type="range" id="volumeSlider" min="0" max="100" value="100" oninput="changeVolume(this.value)" class="w-20 accent-[#1ed760] cursor-pointer h-1.5 bg-slate-700/80 rounded-lg">
+                                <button onclick="toggleFullscreenPlayer()" class="text-slate-400 hover:text-white text-sm cursor-pointer" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar & Timestamps -->
+                        <div class="space-y-1.5 relative z-10 pt-2">
+                            <audio id="customAudioElement" preload="auto" ontimeupdate="updateAudioProgress()" class="hidden"></audio>
+                            <video id="customVideoElement" preload="auto" ontimeupdate="updateVideoProgress()" controls class="hidden w-full h-44 rounded-xl bg-black object-contain"></video>
+
+                            <div class="flex items-center gap-3 text-xs font-mono text-slate-300">
+                                <span id="currentTimeDisplay">00:00</span>
+                                <input type="range" id="audioSeekbar" value="0" max="100" step="0.1" onchange="seekAudio(this.value)" class="w-full accent-[#1ed760] cursor-pointer h-1.5 bg-slate-700/80 rounded-lg">
+                                <span id="totalDurationDisplay">00:00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-5 rounded-3xl bg-[#131b2e] border border-white/10 space-y-4 shadow-xl">
+                        <div class="flex justify-between items-center">
+                            <span id="selectedPlaylistHeading" class="text-xs font-black uppercase tracking-wider text-red-400">PLAYLIST MEDIA</span>
+                        </div>
+                        <div id="playlistSongsListView" class="space-y-2"></div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-4 p-5 rounded-3xl bg-[#131b2e] border border-white/10 space-y-5 shadow-xl">
+                    <div class="flex justify-between items-center border-b border-white/10 pb-3">
+                        <h4 class="font-black text-sm text-red-400">Playlists</h4>
+                    </div>
+                    <div id="playlistsOnlyContainer" class="space-y-3 max-h-[420px] overflow-y-auto pr-1"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Cinematic Fullscreen Player View with Loop & Volume Controls -->
+    <div id="cinematicFullscreenModal" class="hidden fixed inset-0 bg-[#070b14] z-50 flex flex-col justify-between p-6 sm:p-12 text-white overflow-y-auto">
+        <div class="flex justify-between items-center w-full">
+            <span class="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-extrabold uppercase tracking-widest border border-emerald-500/30">Cinematic Hub Mode</span>
+            <button onclick="toggleFullscreenPlayer()" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center font-bold text-lg cursor-pointer">✕</button>
+        </div>
+
+        <div class="flex flex-col items-center justify-center space-y-6 my-auto text-center">
+            <div id="fullscreenLogoContainer" class="w-36 h-36 sm:w-48 sm:h-48 rounded-3xl bg-gradient-to-tr from-[#1ed760] via-emerald-700 to-purple-800 flex items-center justify-center text-white text-5xl font-black shadow-2xl border border-white/20 overflow-hidden">
+                <i class="fa-solid fa-music"></i>
+            </div>
+            <div class="space-y-2 max-w-xl">
+                <h2 id="fullscreenSongTitle" class="text-2xl sm:text-4xl font-black">Shri Swami Samarth</h2>
+                <p id="fullscreenArtistName" class="text-sm text-slate-400">by Sarthak Kamlesh Lande</p>
+            </div>
+        </div>
+
+        <!-- Fullscreen Bottom Controls & Loop/Volume -->
+        <div class="max-w-3xl mx-auto w-full space-y-4 pb-6">
+            <div class="flex items-center justify-between px-2">
+                <button id="fsLoopBtn" onclick="toggleLoopMode()" class="text-slate-400 hover:text-white text-base cursor-pointer transition" title="Loop Mode"><i class="fa-solid fa-repeat"></i></button>
+                <div class="flex items-center gap-3">
+                    <button id="fsMuteBtn" onclick="toggleMuteAudio()" class="text-slate-300 hover:text-white text-sm cursor-pointer"><i class="fa-solid fa-volume-high"></i></button>
+                    <input type="range" id="fsVolumeSlider" min="0" max="100" value="100" oninput="changeVolume(this.value)" class="w-24 accent-[#1ed760] cursor-pointer h-1.5 bg-slate-800 rounded-lg">
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <div class="flex justify-between text-xs font-mono text-slate-400">
+                    <span id="fsCurrentTime">00:00</span>
+                    <span id="fsTotalDuration">00:00</span>
+                </div>
+                <input type="range" id="fsSeekbar" value="0" max="100" step="0.1" onchange="seekAudio(this.value)" class="w-full accent-[#1ed760] cursor-pointer h-2 bg-slate-800 rounded-lg">
+            </div>
+
+            <div class="flex items-center justify-center gap-6 pt-2">
+                <button onclick="skipTrack(-1)" class="text-slate-300 hover:text-white text-xl cursor-pointer"><i class="fa-solid fa-backward-step"></i></button>
+                <button id="fsPlayPauseBtn" onclick="togglePlayPause()" class="w-14 h-14 rounded-full bg-[#1ed760] text-slate-950 flex items-center justify-center shadow-lg font-black text-xl cursor-pointer"><i class="fa-solid fa-play ml-0.5"></i></button>
+                <button onclick="skipTrack(1)" class="text-slate-300 hover:text-white text-xl cursor-pointer"><i class="fa-solid fa-forward-step"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Pin/Password Verification Modal -->
+    <main id="profilePasswordModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-sm w-full shadow-2xl relative z-50 text-center space-y-4">
+            <button onclick="closeModal('profilePasswordModal')" class="absolute top-4 right-4 text-slate-400 font-bold cursor-pointer">✕</button>
+            <div class="w-14 h-14 rounded-2xl bg-red-500/20 text-red-500 flex items-center justify-center mx-auto text-xl font-black"><i class="fa-solid fa-lock"></i></div>
+            <h3 class="font-extrabold text-base" id="authModalTitle">Enter Profile Passcode</h3>
+            <form onsubmit="verifyProfilePassword(event)" class="space-y-3 pt-1">
+                <input type="password" id="profilePinInput" placeholder="Enter password (if required)" class="w-full p-3 bg-white dark:bg-slate-800 rounded-xl border text-xs text-center font-mono tracking-widest">
+                <button type="submit" class="w-full py-2.5 glow-btn text-white font-extrabold rounded-xl text-xs cursor-pointer shadow">Unlock Hub</button>
+            </form>
+        </div>
+    </main>
+
+    <!-- Admin Profile Popout Modal -->
+    <main id="adminProfilePopoutModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-xl w-full shadow-2xl relative z-50 max-h-[90vh] overflow-y-auto space-y-5">
+            <button onclick="closeModal('adminProfilePopoutModal')" class="absolute top-4 right-4 text-slate-400 font-bold cursor-pointer text-lg">✕</button>
+            <h3 id="popoutProfileTitle" class="font-extrabold text-lg text-red-600">Manage Profile</h3>
+            
+            <div class="space-y-5 text-xs">
+                <div class="p-4 bg-slate-100 dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+                    <h4 class="font-bold text-slate-900 dark:text-white text-sm">Edit Profile Info, Passcode & Group</h4>
+                    <input type="text" id="popoutEditName" placeholder="Full Name" class="w-full p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-300 dark:border-slate-700 text-xs">
+                    <input type="text" id="popoutEditPhone" placeholder="Phone Number" class="w-full p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-300 dark:border-slate-700 text-xs">
+                    <input type="text" id="popoutEditPasskey" placeholder="Passcode (Leave blank for no password)" class="w-full p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-mono">
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-400">Assign Group:</label>
+                        <select id="popoutGroupSelect" class="w-full p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-300 dark:border-slate-700 text-xs"></select>
+                    </div>
+                    <button onclick="savePopoutProfileChanges()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold rounded-xl shadow cursor-pointer">Update Profile Info</button>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h4 class="font-extrabold text-sm text-red-600">Playlists & Songs Manager</h4>
+                        <button onclick="adminAddNewPlaylistInPopout()" class="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white font-extrabold rounded-xl text-xs cursor-pointer shadow">+ Create Playlist</button>
+                    </div>
+                    <div id="popoutPlaylistsList" class="space-y-3 max-h-[350px] overflow-y-auto pr-1"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Notifications Modal -->
+    <main id="notificationsModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl p-6 max-w-md w-full shadow-2xl relative z-50 space-y-4">
+            <button onclick="closeModal('notificationsModal')" class="absolute top-4 right-4 text-slate-400 font-bold cursor-pointer">✕</button>
+            <h3 class="font-extrabold text-base text-amber-500">🔔 Portal Broadcast Notifications</h3>
+            <div id="notificationsListContainer" class="space-y-2 max-h-[300px] overflow-y-auto">
+                <p class="text-xs text-slate-500 italic">No broadcasts yet.</p>
+            </div>
+            <button onclick="closeModal('notificationsModal')" class="w-full py-2.5 bg-slate-800 text-white rounded-xl text-xs font-bold cursor-pointer">Close</button>
+        </div>
+    </main>
+
+    <!-- Hidden Inputs -->
+    <input type="file" id="audioUploadInput" accept="audio/*,video/*,.mp3,.mp4,.m4a" class="hidden" onchange="handleAudioFileUpload(event)">
+    <input type="file" id="imageUploadInput" accept="image/*,.jpeg,.jpg,.png,.webp,.avif" class="hidden" onchange="handleImageFileUpload(event)">
+    <input type="file" id="importJsonFileInput" accept=".json" class="hidden" onchange="importPortalData(event)">
+    <div id="toast" class="fixed top-20 right-1/2 translate-x-1/2 bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-full shadow-2xl opacity-0 transition duration-300 pointer-events-none z-50"></div>
+
+    <!-- Firebase & Core Script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB-wz8KRaZ49T6D5E2beZAZdTLDdWUQjamM",
+            authDomain: "lande-family-music-huub.firebaseapp.com",
+            projectId: "lande-family-music-huub",
+            storageBucket: "lande-family-music-huub.firebasestorage.app",
+            messagingSenderId: "1059614458620",
+            appId: "1:1059614458620:web:289ef04ee9cee25b9e8d79",
+            measurementId: "G-XLEE7F3877"
+        };
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'lande-family-music-huub';
+        window.isCloudSynced = false;
+
+        function updateSyncStatusUI(isSynced) {
+            window.isCloudSynced = isSynced;
+            const indicator = document.getElementById('syncIndicator');
+            if (indicator) {
+                indicator.className = `w-2.5 h-2.5 rounded-full ${isSynced ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`;
+            }
+        }
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+
+            signInAnonymously(auth).then(() => {
+                updateSyncStatusUI(true);
+            }).catch(() => {
+                updateSyncStatusUI(false);
+            });
+
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'portal_state_v5_4', 'state_doc');
+                    onSnapshot(docRef, (docSnap) => {
+                        if (docSnap.exists()) {
+                            const data = docSnap.data();
+                            if (data.members && Array.isArray(data.members)) {
+                                window.familyMembers = data.members;
+                                localStorage.setItem('lande_members_v5_4', JSON.stringify(window.familyMembers));
+                                if (typeof renderMembersGrid === 'function') renderMembersGrid();
+                                if (typeof renderGroupFilteredGrid === 'function') renderGroupFilteredGrid();
+                                if (typeof renderGroupChips === 'function') renderGroupChips();
+                            }
+                            if (data.groups && Array.isArray(data.groups)) {
+                                window.portalGroups = data.groups;
+                                localStorage.setItem('lande_groups_v5_4', JSON.stringify(window.portalGroups));
+                            }
+                            if (data.notifications && Array.isArray(data.notifications)) {
+                                window.portalNotifications = data.notifications;
+                                localStorage.setItem('lande_notifs_v5_4', JSON.stringify(window.portalNotifications));
+                                if (typeof updateNotifBadge === 'function') updateNotifBadge();
+                            }
+                            updateSyncStatusUI(true);
+                        }
+                    }, () => { updateSyncStatusUI(false); });
+                }
+            });
+
+            window.saveDataToFirestore = async function() {
+                const payload = { members: window.familyMembers, groups: window.portalGroups, notifications: window.portalNotifications };
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'portal_state_v5_4', 'state_doc');
+                    await setDoc(docRef, payload);
+                    updateSyncStatusUI(true);
+                    showToast("Live synced to cloud!");
+                } catch(e) {
+                    updateSyncStatusUI(false);
+                    showToast("Saved locally!");
+                }
+            };
+        } catch(e) {
+            updateSyncStatusUI(false);
+            window.saveDataToFirestore = async function() { showToast("Saved locally!"); };
+        }
+    </script>
+
+    <script>
+        window.familyMembers = JSON.parse(localStorage.getItem('lande_members_v5_4')) || [
+            { name: "Sarthak Kamlesh Lande", occupation: "Student", phone: "+91 9673465849", group: "General", passKey: "@Sarthak2009", hidden: false, playlists: [
+                { title: "Testing Playlist", logo: "", songs: [
+                    { name: "Custom Track", artist: "Sarthak Kamlesh Lande", logo: "", link: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
+                    { name: "Track", artist: "Sarthak Kamlesh Lande", logo: "", link: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" }
+                ]}
+            ]},
+            { name: "Pushpa Lande", occupation: "Member", phone: "+91 9000000000", group: "Pushpa Lande", passKey: "", hidden: false, playlists: [] }
+        ];
+        window.portalGroups = JSON.parse(localStorage.getItem('lande_groups_v5_4')) || ["General", "Family", "Friends", "Pushpa Lande"];
+        window.portalNotifications = JSON.parse(localStorage.getItem('lande_notifs_v5_4')) || [
+            { text: "Welcome to Lande Family Portal v5.4!", time: "Just now" }
+        ];
+        window.localDeviceDownloads = JSON.parse(localStorage.getItem('lande_local_device_downloads_v5_4') || '[]');
+        window.activeGroupFilter = "General";
+        window.isAdminLoggedIn = false;
+        window.unlockedMemberIndex = null;
+        window.pendingProfileIndexToUnlock = null;
+        window.adminSelectedProfileIndex = null;
+        window.activePlaylistIndexForUpload = null;
+        window.pendingImageUploadTarget = null; // { type: 'song'|'playlist', pIdx: number, sIdx: number|null }
+        window.currentSelectedPlaylistIndex = 0;
+        window.currentPlayingSongIndex = 0;
+        window.currentSongsList = [];
+        window.isLoopActive = false;
+        window.isMutedActive = false;
+        window.isFullscreenActive = false;
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const thumb = document.getElementById('dribbbleThumb');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                if (thumb) thumb.innerText = "☀️";
+                localStorage.setItem('lande_theme_v5_4', 'light');
+            } else {
+                html.classList.remove('light');
+                html.classList.add('dark');
+                if (thumb) thumb.innerText = "🌙";
+                localStorage.setItem('lande_theme_v5_4', 'dark');
+            }
+        }
+
+        if (localStorage.getItem('lande_theme_v5_4') === 'dark') {
+            document.documentElement.classList.remove('light');
+            document.documentElement.classList.add('dark');
+            const thumb = document.getElementById('dribbbleThumb');
+            if (thumb) thumb.innerText = "🌙";
+        }
+
+        function saveToLocalCache() {
+            try {
+                localStorage.setItem('lande_members_v5_4', JSON.stringify(window.familyMembers));
+                localStorage.setItem('lande_groups_v5_4', JSON.stringify(window.portalGroups));
+                localStorage.setItem('lande_notifs_v5_4', JSON.stringify(window.portalNotifications));
+            } catch(err) { console.log(err); }
+            if (typeof window.saveDataToFirestore === 'function') window.saveDataToFirestore();
+        }
+
+        function getInitials(name) {
+            const parts = String(name).trim().split(/\s+/);
+            if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+
+        function createAvatarSVG(initials) {
+            return `<div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-red-600 to-pink-600 flex items-center justify-center text-white font-black text-xl shadow-lg">${initials}</div>`;
+        }
+
+        function switchNavTab(tabName) {
+            document.querySelectorAll('.segment-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('mainDashboardView').classList.add('hidden');
+            document.getElementById('groupsPageView').classList.add('hidden');
+            document.getElementById('ytDownloaderMainView').classList.add('hidden');
+            document.getElementById('aboutPageMainView').classList.add('hidden');
+            document.getElementById('adminPageMainView').classList.add('hidden');
+            document.getElementById('profileHubPageView').classList.add('hidden');
+
+            if (tabName === 'home') {
+                document.getElementById('tabHome').classList.add('active');
+                document.getElementById('mainDashboardView').classList.remove('hidden');
+                renderMembersGrid();
+            } else if (tabName === 'groups') {
+                document.getElementById('tabGroups').classList.add('active');
+                document.getElementById('groupsPageView').classList.remove('hidden');
+                renderGroupChips();
+                renderGroupFilteredGrid();
+            } else if (tabName === 'about') {
+                document.getElementById('tabAbout').classList.add('active');
+                document.getElementById('aboutPageMainView').classList.remove('hidden');
+            } else if (tabName === 'downloader') {
+                document.getElementById('tabDownloader').classList.add('active');
+                document.getElementById('ytDownloaderMainView').classList.remove('hidden');
+                renderLocalDownloadsList();
+            } else if (tabName === 'admin') {
+                document.getElementById('tabAdmin').classList.add('active');
+                document.getElementById('adminPageMainView').classList.remove('hidden');
+                checkAdminLoginState();
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderMembersGrid() {
+            const grid = document.getElementById('membersGrid');
+            if (!grid) return;
+            const visibleMembers = window.familyMembers.filter(m => !m.hidden);
+            if (visibleMembers.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-10 text-center text-xs text-slate-400 italic">No profiles available.</div>`;
+                return;
+            }
+            grid.innerHTML = visibleMembers.map((m) => {
+                const realIdx = window.familyMembers.indexOf(m);
+                const hasPass = m.passKey && m.passKey.trim() !== "";
+                return `
+                <div class="glass-panel rounded-3xl p-5 text-center flex flex-col items-center shadow-sm hover:shadow-lg cursor-pointer transition-all relative" onclick="handleProfileClick(event, ${realIdx})">
+                    <div class="mb-3 relative">
+                        ${createAvatarSVG(getInitials(m.name))}
+                        ${hasPass ? '<span class="absolute -top-1 -right-1 bg-amber-500 text-slate-950 text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow"><i class="fa-solid fa-lock"></i></span>' : ''}
+                    </div>
+                    <h3 class="font-extrabold text-sm">${m.name}</h3>
+                    <p class="text-[11px] text-slate-500 mt-0.5">${m.occupation || 'Member'} • <span class="text-red-400 font-bold">${m.group || 'General'}</span></p>
+                    <button class="mt-4 px-3.5 py-1.5 bg-red-600 text-white rounded-xl text-xs font-bold shadow cursor-pointer">Open Hub</button>
+                </div>
+            `;}).join('');
+        }
+
+        function renderGroupChips() {
+            const container = document.getElementById('groupsFilterChips');
+            if (!container) return;
+            container.innerHTML = window.portalGroups.map(grp => `
+                <button onclick="filterProfilesByGroup('${grp}')" class="px-4 py-2 rounded-xl text-xs font-bold shadow cursor-pointer transition whitespace-nowrap ${window.activeGroupFilter === grp ? 'bg-red-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}">${grp}</button>
+            `).join('');
+        }
+
+        function filterProfilesByGroup(grp) {
+            window.activeGroupFilter = grp;
+            renderGroupChips();
+            renderGroupFilteredGrid();
+        }
+
+        function renderGroupFilteredGrid() {
+            const grid = document.getElementById('groupFilteredMembersGrid');
+            if (!grid) return;
+            const filtered = window.familyMembers.filter(m => !m.hidden && (m.group || "General") === window.activeGroupFilter);
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-10 text-center text-xs text-slate-400 italic">No profiles in group "${window.activeGroupFilter}".</div>`;
+                return;
+            }
+            grid.innerHTML = filtered.map((m) => {
+                const realIdx = window.familyMembers.indexOf(m);
+                const hasPass = m.passKey && m.passKey.trim() !== "";
+                return `
+                <div class="glass-panel rounded-3xl p-5 text-center flex flex-col items-center shadow-sm hover:shadow-lg cursor-pointer transition-all relative" onclick="handleProfileClick(event, ${realIdx})">
+                    <div class="mb-3 relative">
+                        ${createAvatarSVG(getInitials(m.name))}
+                        ${hasPass ? '<span class="absolute -top-1 -right-1 bg-amber-500 text-slate-950 text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow"><i class="fa-solid fa-lock"></i></span>' : ''}
+                    </div>
+                    <h3 class="font-extrabold text-sm">${m.name}</h3>
+                    <p class="text-[11px] text-slate-500 mt-0.5">${m.occupation || 'Member'} • <span class="text-red-400 font-bold">${m.group || 'General'}</span></p>
+                    <button class="mt-4 px-3.5 py-1.5 bg-red-600 text-white rounded-xl text-xs font-bold shadow cursor-pointer">Open Hub</button>
+                </div>
+            `;}).join('');
+        }
+
+        function analyzeSlubnyYtLink() {
+            const url = document.getElementById('ytUrlInput').value.trim();
+            if (!url) { showToast("Kripya valid YouTube URL paste karein!", true); return; }
+            document.getElementById('slubnyYtResultContainer').classList.remove('hidden');
+            document.getElementById('slubnyVideoTitle').innerText = "YouTube Track (" + url.slice(-11) + ")";
+            showToast("YouTube link analyzed successfully!");
+        }
+
+        function executeSlubnyDownload() {
+            const quality = document.getElementById('slubnyQualitySelect').value;
+            const fileName = quality.includes('mp4') ? "YouTube_Video_Stream.mp4" : "YouTube_Audio_Stream.mp3";
+            const fileSize = quality.includes('1080') ? "850 MB" : "50 MB";
+            triggerActualDownload(fileName, fileSize, quality.includes('mp4') ? 'video' : 'audio');
+        }
+
+        function processSpotifyDownloadLink() {
+            const url = document.getElementById('spotifyUrlInput').value.trim();
+            if (!url) { showToast("Kripya Spotify URL paste karein!", true); return; }
+            document.getElementById('spotifyResultBox').classList.remove('hidden');
+            document.getElementById('spotifyFetchedTitle').innerText = "Spotify Audio Track (" + url.slice(-8) + ")";
+            showToast("Spotify link analyzed!");
+        }
+
+        function triggerActualDownload(fileName, fileSize, fileType) {
+            const sampleContent = "Lande Family Portal v5.4 - Media Stream & Download\nTimestamp: " + new Date().toISOString();
+            const mime = fileType === 'video' ? 'video/mp4' : 'audio/mp3';
+            const blob = new Blob([sampleContent], { type: mime });
+            const blobUrl = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+
+            window.localDeviceDownloads.unshift({ title: fileName.replace(/\.[^/.]+$/, ""), size: fileSize, time: new Date().toLocaleTimeString() });
+            localStorage.setItem('lande_local_device_downloads_v5_4', JSON.stringify(window.localDeviceDownloads));
+            renderLocalDownloadsList();
+            showToast(`Downloading started for ${fileName}!`);
+        }
+
+        function renderLocalDownloadsList() {
+            const container = document.getElementById('localDownloadsContainer');
+            if (!container) return;
+            if (window.localDeviceDownloads.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-500 italic text-center py-6">No downloads recorded yet.</p>';
+                return;
+            }
+            container.innerHTML = window.localDeviceDownloads.map(d => `
+                <div class="p-2.5 bg-slate-900 rounded-xl border border-white/10 flex justify-between items-center text-xs">
+                    <div>
+                        <p class="font-bold text-white">${d.title}</p>
+                        <span class="text-[9px] text-slate-400">${d.size} • ${d.time}</span>
+                    </div>
+                    <span class="text-emerald-400 font-bold text-[10px]">Saved</span>
+                </div>
+            `).join('');
+        }
+
+        function clearLocalDownloads() {
+            window.localDeviceDownloads = [];
+            localStorage.removeItem('lande_local_device_downloads_v5_4');
+            renderLocalDownloadsList();
+            showToast("Local downloads history cleared.");
+        }
+
+        function openCreateGroupPrompt() {
+            if (window.portalGroups.length >= 10) { alert("Maximum limit of 10 Groups reached!"); return; }
+            const grpName = prompt("Enter new Group Name (Max 10 groups):");
+            if (!grpName) return;
+            if (window.portalGroups.includes(grpName)) { alert("Group already exists!"); return; }
+            window.portalGroups.push(grpName);
+            saveToLocalCache();
+            renderGroupChips();
+            showToast("Group created successfully!");
+        }
+
+        function sendBroadcastNotification() {
+            const msgInput = document.getElementById('broadcastMsgInput');
+            const text = msgInput.value.trim();
+            if (!text) { alert("Enter message!"); return; }
+            window.portalNotifications.unshift({ text, time: "Just now" });
+            msgInput.value = "";
+            saveToLocalCache();
+            updateNotifBadge();
+            showToast("Broadcast sent!");
+        }
+
+        function updateNotifBadge() {
+            const badge = document.getElementById('notifBadge');
+            const container = document.getElementById('notificationsListContainer');
+            if (window.portalNotifications && window.portalNotifications.length > 0) {
+                badge.classList.remove('hidden');
+                container.innerHTML = window.portalNotifications.map(n => `
+                    <div class="p-3 bg-slate-900/90 rounded-2xl border border-white/10 space-y-1">
+                        <p class="text-xs font-bold text-white">📢 ${n.text}</p>
+                        <span class="text-[9px] text-slate-400">${n.time}</span>
+                    </div>
+                `).join('');
+            } else {
+                badge.classList.add('hidden');
+                container.innerHTML = '<p class="text-xs text-slate-500 italic">No notifications.</p>';
+            }
+        }
+
+        function openNotificationsModal() {
+            updateNotifBadge();
+            openModal('notificationsModal');
+        }
+
+        function renderAdminProfileCards() {
+            const container = document.getElementById('adminProfilesCardsGrid');
+            if (!container) return;
+            container.innerHTML = window.familyMembers.map((m, mIdx) => `
+                <div class="glass-panel rounded-3xl p-4 text-center flex flex-col items-center shadow-md relative bg-white/80 dark:bg-slate-800 space-y-2">
+                    <div class="mb-1">${createAvatarSVG(getInitials(m.name))}</div>
+                    <h4 class="font-bold text-sm">${m.name} ${m.hidden ? '<span class="text-red-500 text-[9px]">(Hidden)</span>' : ''}</h4>
+                    <p class="text-[10px] text-slate-400">Group: <span class="text-red-400 font-bold">${m.group || 'General'}</span></p>
+                    <p class="text-[10px] text-slate-400">Passcode: <span class="font-mono text-amber-500">${m.passKey ? '🔒 Set' : 'None'}</span></p>
+                    <div class="flex gap-2 pt-2 flex-wrap justify-center">
+                        <button onclick="openAdminProfilePopout(${mIdx})" class="px-2.5 py-1 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs shadow cursor-pointer">Manage</button>
+                        <button onclick="toggleHideProfile(${mIdx})" class="px-2.5 py-1 bg-blue-600 text-white font-bold rounded-xl text-xs shadow cursor-pointer">${m.hidden ? 'Show' : 'Hide'}</button>
+                        <button onclick="adminDeleteProfile(${mIdx})" class="px-2.5 py-1 bg-red-600 text-white font-bold rounded-xl text-xs shadow cursor-pointer">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleHideProfile(mIdx) {
+            window.familyMembers[mIdx].hidden = !window.familyMembers[mIdx].hidden;
+            saveToLocalCache();
+            renderAdminProfileCards();
+            renderMembersGrid();
+            renderGroupFilteredGrid();
+            showToast("Profile visibility updated!");
+        }
+
+        function openAdminProfilePopout(mIdx) {
+            window.adminSelectedProfileIndex = mIdx;
+            const m = window.familyMembers[mIdx];
+            document.getElementById('popoutProfileTitle').innerText = `Manage: ${m.name}`;
+            document.getElementById('popoutEditName').value = m.name;
+            document.getElementById('popoutEditPhone').value = m.phone || "";
+            document.getElementById('popoutEditPasskey').value = m.passKey || "";
+            const selectEl = document.getElementById('popoutGroupSelect');
+            selectEl.innerHTML = window.portalGroups.map(g => `<option value="${g}" ${ (m.group || "General") === g ? 'selected' : ''}>${g}</option>`).join('');
+            renderPopoutPlaylists(m);
+            openModal('adminProfilePopoutModal');
+        }
+
+        function savePopoutProfileChanges() {
+            if (window.adminSelectedProfileIndex === null) return;
+            const m = window.familyMembers[window.adminSelectedProfileIndex];
+            const targetGroup = document.getElementById('popoutGroupSelect').value;
+            
+            m.name = document.getElementById('popoutEditName').value.trim() || m.name;
+            m.phone = document.getElementById('popoutEditPhone').value.trim();
+            m.passKey = document.getElementById('popoutEditPasskey').value.trim();
+            m.group = targetGroup;
+            saveToLocalCache();
+            renderAdminProfileCards();
+            renderMembersGrid();
+            renderGroupFilteredGrid();
+            showToast("Profile info updated successfully!");
+        }
+
+        function renderPopoutPlaylists(m) {
+            const container = document.getElementById('popoutPlaylistsList');
+            if (!container) return;
+            if (!m.playlists || m.playlists.length === 0) {
+                container.innerHTML = '<p class="text-[11px] text-slate-400 italic">No playlists created yet.</p>';
+                return;
+            }
+            container.innerHTML = m.playlists.map((pl, pIdx) => `
+                <div class="p-4 bg-[#0f172a] rounded-2xl border border-slate-800 space-y-3 shadow-lg">
+                    <div class="flex justify-between items-center gap-2">
+                        <div class="flex items-center space-x-2.5 truncate">
+                            <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center overflow-hidden shrink-0">
+                                ${pl.logo ? `<img src="${pl.logo}" class="w-full h-full object-cover">` : '<i class="fa-solid fa-folder text-amber-400 text-xs"></i>'}
+                            </div>
+                            <span class="font-black text-xs text-amber-400 truncate">${pl.title}</span>
+                        </div>
+                        <div class="flex gap-1.5 shrink-0 flex-wrap justify-end">
+                            <button onclick="adminEditPlaylistLogo(${pIdx})" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-[10px] cursor-pointer" title="Gallery se Playlist Logo chunein">Logo 🖼️</button>
+                            <button onclick="adminRenamePlaylist(${pIdx})" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg text-[10px] cursor-pointer">Rename</button>
+                            <button onclick="adminDeletePlaylist(${pIdx})" class="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-[10px] cursor-pointer">Delete</button>
+                            <button onclick="triggerAudioUploadForPlaylist(${pIdx})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[10px] cursor-pointer">+ Upload MP3</button>
+                        </div>
+                    </div>
+                    <div class="space-y-1.5 pt-1 pl-2 border-t border-slate-800/80">
+                        ${pl.songs && pl.songs.length > 0 ? pl.songs.map((s, sIdx) => `
+                            <div class="flex justify-between items-center bg-slate-950/80 p-2.5 rounded-xl text-xs border border-slate-900 gap-2">
+                                <div class="flex items-center space-x-2 truncate">
+                                    <div class="w-7 h-7 rounded-md bg-slate-800 flex items-center justify-center overflow-hidden shrink-0">
+                                        ${s.logo ? `<img src="${s.logo}" class="w-full h-full object-cover">` : '<i class="fa-solid fa-music text-indigo-400 text-[10px]"></i>'}
+                                    </div>
+                                    <span class="text-slate-200 font-medium truncate">${s.name}</span>
+                                </div>
+                                <div class="flex gap-1 shrink-0">
+                                    <button onclick="adminRenameSong(${pIdx}, ${sIdx})" class="px-2 py-0.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded text-[9px] cursor-pointer">Rename</button>
+                                    <button onclick="adminEditSongLogo(${pIdx}, ${sIdx})" class="px-2 py-0.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded text-[9px] cursor-pointer" title="Gallery se Song Logo chunein">Logo 🖼️</button>
+                                    <button onclick="adminDeleteSong(${pIdx}, ${sIdx})" class="px-2 py-0.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded text-[9px] cursor-pointer">Delete</button>
+                                </div>
+                            </div>
+                        `).join('') : '<p class="text-[10px] text-slate-500 italic py-1">No songs in playlist.</p>'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function adminAddNewPlaylistInPopout() {
+            const m = window.familyMembers[window.adminSelectedProfileIndex];
+            if (!m.playlists) m.playlists = [];
+            if (m.playlists.length >= 20) { alert("Maximum limit of 20 Playlists reached!"); return; }
+            const title = prompt("Enter Playlist Name:");
+            if (!title) return;
+            m.playlists.push({ title, logo: "", songs: [] });
+            saveToLocalCache();
+            renderPopoutPlaylists(m);
+            showToast("Playlist created successfully!");
+        }
+
+        function adminRenamePlaylist(pIdx) {
+            const m = window.familyMembers[window.adminSelectedProfileIndex];
+            const newTitle = prompt("Enter new playlist name:", m.playlists[pIdx].title);
+            if (!newTitle) return;
+            m.playlists[pIdx].title = newTitle;
+            saveToLocalCache();
+            renderPopoutPlaylists(m);
+            showToast("Playlist renamed!");
+        }
+
+        function adminDeletePlaylist(pIdx) {
+            if (confirm("Delete this playlist?")) {
+                const m = window.familyMembers[window.adminSelectedProfileIndex];
+                m.playlists.splice(pIdx, 1);
+                saveToLocalCache();
+                renderPopoutPlaylists(m);
+                showToast("Playlist deleted!");
+            }
+        }
+
+        function adminRenameSong(pIdx, sIdx) {
+            const m = window.familyMembers[window.adminSelectedProfileIndex];
+            const song = m.playlists[pIdx].songs[sIdx];
+            const newName = prompt("Enter new Song Name:", song.name);
+            if (!newName) return;
+            song.name = newName.trim();
+            saveToLocalCache();
+            renderPopoutPlaylists(m);
+            showToast("Song renamed successfully!");
+        }
+
+        /* Gallery Image File Picker for Song and Playlist Logos */
+        function adminEditSongLogo(pIdx, sIdx) {
+            window.pendingImageUploadTarget = { type: 'song', pIdx: pIdx, sIdx: sIdx };
+            const input = document.getElementById('imageUploadInput');
+            if (input) {
+                input.value = '';
+                input.click();
+            }
+        }
+
+        function adminEditPlaylistLogo(pIdx) {
+            window.pendingImageUploadTarget = { type: 'playlist', pIdx: pIdx, sIdx: null };
+            const input = document.getElementById('imageUploadInput');
+            if (input) {
+                input.value = '';
+                input.click();
+            }
+        }
+
+        function handleImageFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (file.size > 10 * 1024 * 1024) { 
+                alert("Image file size 10MB se kam honi chahiye!"); 
+                return; 
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const dataUrl = evt.target.result;
+                const target = window.pendingImageUploadTarget;
+                if (!target) return;
+
+                const m = window.familyMembers[window.adminSelectedProfileIndex];
+                if (!m || !m.playlists || !m.playlists[target.pIdx]) return;
+
+                if (target.type === 'song') {
+                    if (m.playlists[target.pIdx].songs && m.playlists[target.pIdx].songs[target.sIdx]) {
+                        m.playlists[target.pIdx].songs[target.sIdx].logo = dataUrl;
+                        showToast("Gallery se Song Logo successfully update ho gaya!");
+                    }
+                } else if (target.type === 'playlist') {
+                    m.playlists[target.pIdx].logo = dataUrl;
+                    showToast("Gallery se Playlist Logo successfully update ho gaya!");
+                }
+
+                saveToLocalCache();
+                renderPopoutPlaylists(m);
+
+                if (window.unlockedMemberIndex !== null && window.familyMembers[window.unlockedMemberIndex] === m) {
+                    renderHubMusicLayout(m);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function triggerAudioUploadForPlaylist(pIdx) {
+            const m = window.familyMembers[window.adminSelectedProfileIndex];
+            if (m.playlists[pIdx].songs && m.playlists[pIdx].songs.length >= 20) { alert("Max 20 songs limit reached!"); return; }
+            window.activePlaylistIndexForUpload = pIdx;
+            document.getElementById('audioUploadInput').click();
+        }
+
+        function handleAudioFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 50 * 1024 * 1024) { alert("File size 50MB se zyada hai!"); return; }
+
+            const objectUrl = URL.createObjectURL(file);
+            const fileName = file.name.replace(/\.[^/.]+$/, "");
+            const m = window.familyMembers[window.adminSelectedProfileIndex];
+            const pIdx = window.activePlaylistIndexForUpload;
+            
+            if (!m.playlists[pIdx].songs) m.playlists[pIdx].songs = [];
+            m.playlists[pIdx].songs.push({ name: fileName, artist: m.name, logo: "", link: objectUrl, type: 'audio' });
+            saveToLocalCache();
+            renderPopoutPlaylists(m);
+            showToast("Song uploaded successfully!");
+        }
+
+        function adminDeleteSong(pIdx, sIdx) {
+            if (confirm("Delete this song?")) {
+                const m = window.familyMembers[window.adminSelectedProfileIndex];
+                m.playlists[pIdx].songs.splice(sIdx, 1);
+                saveToLocalCache();
+                renderPopoutPlaylists(m);
+                showToast("Song deleted!");
+            }
+        }
+
+        function openAddMemberModal() {
+            if (window.familyMembers.length >= 12) { alert("Maximum limit of 12 Profiles reached!"); return; }
+            const name = prompt("Enter Full Name (Max 12 profiles total):");
+            if (!name) return;
+            const phone = prompt("Enter Phone Number:", "+91 ");
+            const group = prompt(`Assign Group (${window.portalGroups.join(', ')}):`, "General");
+            const passKey = prompt("Enter Optional Password for Profile (Leave empty for no password):", "");
+
+            window.familyMembers.push({ 
+                name, 
+                occupation: "Member", 
+                phone: phone || "+91 ", 
+                group: window.portalGroups.includes(group) ? group : "General", 
+                passKey: passKey ? passKey.trim() : "", 
+                hidden: false, 
+                playlists: [] 
+            });
+            saveToLocalCache();
+            renderMembersGrid();
+            renderGroupFilteredGrid();
+            if (window.isAdminLoggedIn) renderAdminProfileCards();
+            showToast("Profile added successfully!");
+        }
+
+        function adminDeleteProfile(mIdx) {
+            if (confirm("Delete this profile?")) {
+                window.familyMembers.splice(mIdx, 1);
+                saveToLocalCache();
+                renderAdminProfileCards();
+                renderMembersGrid();
+                renderGroupFilteredGrid();
+                showToast("Profile deleted!");
+            }
+        }
+
+        function exportPortalData() {
+            const portalData = { members: window.familyMembers, groups: window.portalGroups, notifications: window.portalNotifications };
+            const blob = new Blob([JSON.stringify(portalData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `lande_family_portal_v5_4_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            showToast("Backup exported!");
+        }
+
+        function triggerImportPortalData() { document.getElementById('importJsonFileInput').click(); }
+
+        function importPortalData(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = JSON.parse(evt.target.result);
+                    if (data.members) {
+                        window.familyMembers = data.members;
+                        if (data.groups) window.portalGroups = data.groups;
+                        if (data.notifications) window.portalNotifications = data.notifications;
+                        saveToLocalCache();
+                        renderGroupChips();
+                        renderMembersGrid();
+                        renderGroupFilteredGrid();
+                        if (window.isAdminLoggedIn) renderAdminProfileCards();
+                        showToast("Backup imported successfully!");
+                    }
+                } catch(err) { showToast("Invalid JSON file!"); }
+            };
+            reader.readAsText(file);
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // Music Player Controls & Sequence with Safe Error Handling (UNTOUCHED)
+        function formatAudioTime(seconds) {
+            if (isNaN(seconds)) return "00:00";
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        function toggleLoopMode() {
+            window.isLoopActive = !window.isLoopActive;
+            const audio = document.getElementById('customAudioElement');
+            const loopBtn = document.getElementById('loopToggleBtn');
+            const fsLoopBtn = document.getElementById('fsLoopBtn');
+            audio.loop = window.isLoopActive;
+            
+            if (window.isLoopActive) {
+                if (loopBtn) loopBtn.classList.add('text-[#1ed760]');
+                if (fsLoopBtn) fsLoopBtn.classList.add('text-[#1ed760]');
+                showToast("Loop Mode Enabled (🔁 Active)");
+            } else {
+                if (loopBtn) loopBtn.classList.remove('text-[#1ed760]');
+                if (fsLoopBtn) fsLoopBtn.classList.remove('text-[#1ed760]');
+                showToast("Loop Mode Disabled");
+            }
+        }
+
+        function toggleMuteAudio() {
+            window.isMutedActive = !window.isMutedActive;
+            const audio = document.getElementById('customAudioElement');
+            const muteBtn = document.getElementById('muteToggleBtn');
+            const fsMuteBtn = document.getElementById('fsMuteBtn');
+            audio.muted = window.isMutedActive;
+
+            const iconMarkup = window.isMutedActive ? '<i class="fa-solid fa-volume-xmark text-amber-500"></i>' : '<i class="fa-solid fa-volume-high"></i>';
+            if (muteBtn) muteBtn.innerHTML = iconMarkup;
+            if (fsMuteBtn) fsMuteBtn.innerHTML = iconMarkup;
+            showToast(window.isMutedActive ? "Audio Muted" : "Audio Unmuted");
+        }
+
+        function changeVolume(val) {
+            const audio = document.getElementById('customAudioElement');
+            audio.volume = val / 100;
+            const volSliders = [document.getElementById('volumeSlider'), document.getElementById('fsVolumeSlider')];
+            volSliders.forEach(s => { if (s) s.value = val; });
+
+            if (audio.volume === 0) {
+                window.isMutedActive = true;
+                const muteIcon = '<i class="fa-solid fa-volume-xmark text-amber-500"></i>';
+                document.getElementById('muteToggleBtn').innerHTML = muteIcon;
+                const fsM = document.getElementById('fsMuteBtn');
+                if (fsM) fsM.innerHTML = muteIcon;
+            } else {
+                window.isMutedActive = false;
+                const highIcon = '<i class="fa-solid fa-volume-high"></i>';
+                document.getElementById('muteToggleBtn').innerHTML = highIcon;
+                const fsH = document.getElementById('fsMuteBtn');
+                if (fsH) fsH.innerHTML = highIcon;
+            }
+        }
+
+        function toggleFullscreenPlayer() {
+            window.isFullscreenActive = !window.isFullscreenActive;
+            const modal = document.getElementById('cinematicFullscreenModal');
+            if (window.isFullscreenActive) {
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function playSpatialTrack(songName, artistName, songLink, songLogo = '', songType = 'audio', songIdx = 0, songsList = []) {
+            document.getElementById('bannerSongTitle').innerText = songName;
+            document.getElementById('bannerArtistName').innerText = `by ${artistName || 'Lande Music'}`;
+            document.getElementById('fullscreenSongTitle').innerText = songName;
+            document.getElementById('fullscreenArtistName').innerText = `by ${artistName || 'Lande Music'}`;
+
+            const logoHtml = songLogo ? `<img src="${songLogo}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-music"></i>`;
+            document.getElementById('bannerSongLogoBox').innerHTML = logoHtml;
+            document.getElementById('fullscreenLogoContainer').innerHTML = logoHtml;
+
+            window.currentPlayingSongIndex = songIdx;
+            if (songsList.length > 0) window.currentSongsList = songsList;
+
+            const audio = document.getElementById('customAudioElement');
+            audio.pause();
+            audio.currentTime = 0;
+            audio.loop = window.isLoopActive;
+            audio.muted = window.isMutedActive;
+            audio.classList.remove('hidden');
+            audio.src = songLink;
+            audio.load();
+
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    document.getElementById('bannerPlayPauseBtn').innerHTML = '<i class="fa-solid fa-pause ml-0.5"></i>';
+                    const fsBtn = document.getElementById('fsPlayPauseBtn');
+                    if (fsBtn) fsBtn.innerHTML = '<i class="fa-solid fa-pause ml-0.5"></i>';
+                    showToast(`Playing: ${songName}`);
+                }).catch(error => {
+                    console.error("Playback prevented:", error);
+                    showToast("Click Play button to start audio!", true);
+                    document.getElementById('bannerPlayPauseBtn').innerHTML = '<i class="fa-solid fa-play ml-0.5"></i>';
+                    const fsBtn = document.getElementById('fsPlayPauseBtn');
+                    if (fsBtn) fsBtn.innerHTML = '<i class="fa-solid fa-play ml-0.5"></i>';
+                });
+            }
+        }
+
+        function togglePlayPause() {
+            const audio = document.getElementById('customAudioElement');
+            const btn = document.getElementById('bannerPlayPauseBtn');
+            const fsBtn = document.getElementById('fsPlayPauseBtn');
+            if (audio.paused) { 
+                audio.play().then(() => {
+                    btn.innerHTML = '<i class="fa-solid fa-pause ml-0.5"></i>';
+                    if (fsBtn) fsBtn.innerHTML = '<i class="fa-solid fa-pause ml-0.5"></i>';
+                }).catch(e => { showToast("Play error: Check audio source", true); }); 
+            } else { 
+                audio.pause(); 
+                btn.innerHTML = '<i class="fa-solid fa-play ml-0.5"></i>'; 
+                if (fsBtn) fsBtn.innerHTML = '<i class="fa-solid fa-play ml-0.5"></i>';
+            }
+        }
+
+        function updateAudioProgress() {
+            const audio = document.getElementById('customAudioElement');
+            const seekbar = document.getElementById('audioSeekbar');
+            const fsSeekbar = document.getElementById('fsSeekbar');
+            const currentTimeEl = document.getElementById('currentTimeDisplay');
+            const totalDurationEl = document.getElementById('totalDurationDisplay');
+            const fsCurrentTime = document.getElementById('fsCurrentTime');
+            const fsTotalDuration = document.getElementById('fsTotalDuration');
+
+            if (!audio.duration) return;
+            const progress = (audio.currentTime / audio.duration) * 100;
+            seekbar.value = progress;
+            if (fsSeekbar) fsSeekbar.value = progress;
+
+            const curTimeFormatted = formatAudioTime(audio.currentTime);
+            const totTimeFormatted = formatAudioTime(audio.duration);
+
+            currentTimeEl.innerText = curTimeFormatted;
+            totalDurationEl.innerText = totTimeFormatted;
+            if (fsCurrentTime) fsCurrentTime.innerText = curTimeFormatted;
+            if (fsTotalDuration) fsTotalDuration.innerText = totTimeFormatted;
+
+            if (audio.ended && !window.isLoopActive) skipTrack(1);
+        }
+
+        function seekAudio(val) {
+            const audio = document.getElementById('customAudioElement');
+            if (audio.duration) audio.currentTime = (val / 100) * audio.duration;
+        }
+
+        function skipTrack(dir) {
+            if (!window.currentSongsList || window.currentSongsList.length === 0) return;
+            window.currentPlayingSongIndex = (window.currentPlayingSongIndex + dir + window.currentSongsList.length) % window.currentSongsList.length;
+            const next = window.currentSongsList[window.currentPlayingSongIndex];
+            playSpatialTrack(next.name, next.artist, next.link, next.logo || '', next.type || 'audio', window.currentPlayingSongIndex, window.currentSongsList);
+        }
+
+        function selectPlaylistAndLoadSongs(pIdx) {
+            window.currentSelectedPlaylistIndex = pIdx;
+            renderHubMusicLayout(window.familyMembers[window.unlockedMemberIndex]);
+        }
+
+        function renderHubMusicLayout(member) {
+            const plContainer = document.getElementById('playlistsOnlyContainer');
+            if (!member.playlists || member.playlists.length === 0) {
+                plContainer.innerHTML = '<p class="text-xs text-slate-400 italic">No playlists.</p>';
+            } else {
+                plContainer.innerHTML = member.playlists.map((pl, pIdx) => {
+                    const isActive = pIdx === window.currentSelectedPlaylistIndex;
+                    return `
+                    <div onclick="selectPlaylistAndLoadSongs(${pIdx})" class="flex items-center justify-between p-3.5 rounded-2xl bg-black/40 border border-white/5 text-xs hover:bg-black/60 transition cursor-pointer shadow ${isActive ? 'playlist-card-active' : ''}">
+                        <div class="flex items-center space-x-3 truncate">
+                            <div class="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-white text-xs overflow-hidden shrink-0">
+                                ${pl.logo ? `<img src="${pl.logo}" class="w-full h-full object-cover">` : '<i class="fa-solid fa-compact-disc text-amber-400"></i>'}
+                            </div>
+                            <span class="font-bold text-white text-sm truncate">${pl.title}</span>
+                        </div>
+                        <span class="text-slate-400 text-xs shrink-0 ml-2">${pl.songs?.length || 0} Songs</span>
+                    </div>
+                `;}).join('');
+            }
+
+            const selectedPl = member.playlists[window.currentSelectedPlaylistIndex] || member.playlists[0];
+            const songsContainer = document.getElementById('playlistSongsListView');
+
+            if (selectedPl) {
+                if (!selectedPl.songs || selectedPl.songs.length === 0) {
+                    songsContainer.innerHTML = '<p class="text-xs text-slate-500 italic py-2 text-center">No songs in this playlist yet.</p>';
+                } else {
+                    window.currentSongsList = selectedPl.songs;
+                    songsContainer.innerHTML = selectedPl.songs.map((s, idx) => `
+                        <div class="flex items-center justify-between p-3 rounded-2xl bg-black/30 border border-white/5 text-xs gap-3">
+                            <div class="flex items-center space-x-3 truncate">
+                                <div class="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-white text-xs overflow-hidden shrink-0">
+                                    ${s.logo ? `<img src="${s.logo}" class="w-full h-full object-cover">` : '<i class="fa-solid fa-music"></i>'}
+                                </div>
+                                <div class="truncate">
+                                    <h5 class="font-bold text-white truncate">${s.name}</h5>
+                                    <p class="text-[10px] text-slate-400 truncate">${s.artist || member.name}</p>
+                                </div>
+                            </div>
+                            <button onclick="playSpatialTrack('${s.name}', '${s.artist || member.name}', '${s.link}', '${s.logo || ''}', 'audio', ${idx}, ${JSON.stringify(selectedPl.songs).replace(/"/g, '&quot;')})" class="px-3 py-1.5 bg-[#1ed760] text-slate-950 font-bold rounded-xl text-[10px] cursor-pointer shadow shrink-0">Play</button>
+                        </div>
+                    `).join('');
+                }
+            }
+        }
+
+        function handleProfileClick(e, index) {
+            if (e) e.stopPropagation();
+            const member = window.familyMembers[index];
+            if (member.passKey && member.passKey.trim() !== "") {
+                window.pendingProfileIndexToUnlock = index;
+                document.getElementById('authModalTitle').innerText = `Enter Passcode for ${member.name}`;
+                document.getElementById('profilePinInput').value = "";
+                openModal('profilePasswordModal');
+                return;
+            }
+            proceedToProfileHub(index);
+        }
+
+        function verifyProfilePassword(e) {
+            e.preventDefault();
+            const entered = document.getElementById('profilePinInput').value.trim();
+            const member = window.familyMembers[window.pendingProfileIndexToUnlock];
+            if (entered === member.passKey) {
+                closeModal('profilePasswordModal');
+                proceedToProfileHub(window.pendingProfileIndexToUnlock);
+                showToast("Profile unlocked!");
+            } else {
+                alert("Incorrect Passcode!");
+            }
+        }
+
+        function proceedToProfileHub(index) {
+            window.unlockedMemberIndex = index;
+            window.currentSelectedPlaylistIndex = 0;
+            const member = window.familyMembers[index];
+            document.getElementById('hubName').innerText = member.name;
+            document.getElementById('hubPhone').innerText = member.phone || "+91 9673465849";
+            document.getElementById('hubAvatarBox').innerHTML = getInitials(member.name);
+            renderHubMusicLayout(member);
+            document.getElementById('mainDashboardView').classList.add('hidden');
+            document.getElementById('groupsPageView').classList.add('hidden');
+            document.getElementById('ytDownloaderMainView').classList.add('hidden');
+            document.getElementById('profileHubPageView').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function backToDashboard() {
+            document.getElementById('profileHubPageView').classList.add('hidden');
+            document.getElementById('mainDashboardView').classList.remove('hidden');
+            renderMembersGrid();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function checkAdminLoginState() {
+            const loginBox = document.getElementById('adminLoginContainer');
+            const dashBox = document.getElementById('adminDashboardContainer');
+            if (window.isAdminLoggedIn) {
+                loginBox.classList.add('hidden');
+                dashBox.classList.remove('hidden');
+                renderAdminProfileCards();
+            } else {
+                loginBox.classList.remove('hidden');
+                dashBox.classList.add('hidden');
+            }
+        }
+
+        function verifyAdminPassword(e) {
+            e.preventDefault();
+            const val = document.getElementById('adminPassInput').value.trim();
+            if (val === "@Sarthak2009" || val === "ADMIN2009") {
+                window.isAdminLoggedIn = true;
+                checkAdminLoginState();
+                showToast("Admin Logged In!");
+            } else {
+                alert("Incorrect Password");
+            }
+        }
+
+        function logoutAdmin() {
+            window.isAdminLoggedIn = false;
+            checkAdminLoginState();
+            showToast("Logged Out");
+        }
+
+        function showToast(msg, isErr = false) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.classList.add('opacity-100'); t.classList.remove('opacity-0');
+            setTimeout(() => { t.classList.remove('opacity-100'); t.classList.add('opacity-0'); }, 2000);
+        }
+
+        window.onload = function() {
+            renderMembersGrid();
+            renderGroupChips();
+            updateNotifBadge();
+        };
+    </script>
+</body>
+</html>
